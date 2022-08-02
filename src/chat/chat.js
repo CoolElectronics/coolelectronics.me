@@ -1,8 +1,7 @@
 import '../app.css'
-import '../fill.css'
-import Sign from './Sign.svelte'
+import Chat from './Chat.svelte'
 
-const app = new Sign({
+const app = new Chat({
   target: document.getElementById('app')
 })
 

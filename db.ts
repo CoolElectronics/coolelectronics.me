@@ -5,29 +5,59 @@ import dotenv from "dotenv";
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
 
-
 export async function connect(): Promise<Database> {
   let db = await client.connect();
   return new Database(db.db("database"));
 }
 export class Database {
-  database: Db
-  constructor(database:Db){
+  database: Db;
+  constructor(database: Db) {
     this.database = database;
   }
-  async getUser(username: String): Promise<User | null> {
+  async appendToList(collection:string,selector:object,propname:any,toappend:any){
+    try{
+      let obj = await this.database.collection(collection).findOne(selector);
+      if (obj){
+        let array = obj[propname];
+        array.push(toappend);
+        let setter = {
+          $set:{}
+        }
+        setter.$set[propname] = array;
+        this.database.collection(collection).updateOne(selector,setter);
+      }
+    }catch (err){
+      console.error(err);
+    }
+  }
+
+
+  async getUser(username: string): Promise<User | null> {
     try {
-      return await this.database.collection("Users").findOne<User>({
+      let user = await this.database.collection("Users").findOne<User>({
         username,
       });
+
+      // schema traps here
+
+      return user;
     } catch (err) {
       console.error(err);
     }
     return null;
   }
+  async addUser(username: string, hash: string) {
+    await this.database.collection("Users").insertOne(constructUser(username,hash));
+  }
 
-  async Validate(cookies, permissions:any, success:Function, failiure:Function, denied:Function = failiure) {
-    var payload:UserPayload;
+  async Validate(
+    cookies,
+    permissions: any,
+    success: Function,
+    failiure: Function,
+    denied: Function = failiure
+  ) {
+    var payload: UserPayload;
     if (cookies != null) {
       if (cookies.token != null) {
         try {
@@ -93,14 +123,29 @@ function parsePermissions(present: any, required: any) {
   return allowed;
 }
 
-interface User {
+export interface User {
   username: string;
   hash: string;
   friends: ObjectId[];
   worker: any; // later
-  permissions: any;
-  files: ObjectId;
+  permissions: object;
+  notifications: Notification[];
+  files: ObjectId[];
+  boards: ObjectId[];
 }
-interface UserPayload{
-  username: string,
+function constructUser(username: string, hash: string) {
+  return {
+    username,
+    hash,
+    friends: [],
+    worker: null,
+    permissions: {},
+    notifications: [],
+    files: [],
+    boards:[],
+  };
+}
+export interface Notification {}
+export interface UserPayload {
+  username: string;
 }

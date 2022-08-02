@@ -1,8 +1,7 @@
 import '../app.css'
-import '../fill.css'
-import Sign from './Sign.svelte'
+import Home from './Home.svelte'
 
-const app = new Sign({
+const app = new Home({
   target: document.getElementById('app')
 })
 
