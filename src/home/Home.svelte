@@ -9,9 +9,9 @@
 
 </script>
 
-<main>
+<main class = "dark">
 <TopBar></TopBar>
-<h1>
+<h1 class="text">
 uhh yeah this is the homepage
 </h1>
 </main>

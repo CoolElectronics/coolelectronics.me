@@ -1,60 +1,103 @@
-import { MongoClient, ObjectId, Db } from "mongodb";
+import { MongoClient, Db, Document } from "mongodb";
 import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { noop } from "svelte/internal";
+import { randomUUID } from "crypto";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
 
 export async function connect(): Promise<Database> {
-  let db = await client.connect();
-  return new Database(db.db("database"));
+  let mongo = await client.connect();
+  let database = new Database(mongo.db("database"));
+  await database.declareCollections(["Users", "Rooms", "Games", "Ftp","FriendRequests"]);
+  return database;
 }
 export class Database {
   database: Db;
   constructor(database: Db) {
     this.database = database;
   }
-  async appendToList(collection:string,selector:object,propname:any,toappend:any){
-    try{
+  async declareCollections(names: string[]) {
+    names.forEach(async (name) => {
+      if (
+        !(await this.database.listCollections().toArray())
+          .map((c) => c.name)
+          .includes(name)
+      ) {
+        this.database.createCollection(name, (err, res) => {
+          if (err) throw err;
+        });
+      }
+    });
+  }
+  async appendToList(
+    collection: string,
+    selector: object,
+    propname: any,
+    toappend: any
+  ) {
+    try {
       let obj = await this.database.collection(collection).findOne(selector);
-      if (obj){
+      if (obj) {
         let array = obj[propname];
         array.push(toappend);
         let setter = {
-          $set:{}
-        }
+          $set: {},
+        };
         setter.$set[propname] = array;
-        this.database.collection(collection).updateOne(selector,setter);
+        this.database.collection(collection).updateOne(selector, setter);
       }
-    }catch (err){
-      console.error(err);
-    }
-  }
-
-
-  async getUser(username: string): Promise<User | null> {
-    try {
-      let user = await this.database.collection("Users").findOne<User>({
-        username,
-      });
-
-      // schema traps here
-
-      return user;
     } catch (err) {
       console.error(err);
     }
-    return null;
+  }
+
+  async getAll<T = Document>(collection: string): Promise<T[]> {
+    return await this.database.collection(collection).find<T>({}).toArray();
+  }
+  async getOne<T = Document>(
+    collection: string,
+    selector: object
+  ): Promise<T | null> {
+    return await this.database.collection(collection).findOne<T>(selector);
+  }
+  async addOne<T = Document>(collection:string,obj:T){
+    await this.database.collection(collection).insertOne(obj);
+  }
+
+  async getUser(id:string): Promise<User | null> {
+    let user = await this.getOne<User>("Users", { uuid: id });
+
+    let updated = updateUserSchema(user);
+    if (user != updated){
+      user = updated;
+      this.database.collection("Users").findOneAndReplace({uuid:id},updated);
+    }
+
+    return user;
+  }
+
+  async getUserByName(username:string): Promise<User | null> {
+    let user = await this.getOne<User>("Users", { username});
+    let updated = updateUserSchema(user);
+    if (user != updated){
+      user = updated;
+      this.database.collection("Users").findOneAndReplace({username},updated);
+    }
+    return user;
   }
   async addUser(username: string, hash: string) {
-    await this.database.collection("Users").insertOne(constructUser(username,hash));
+    await this.database
+      .collection("Users")
+      .insertOne(constructUser(username, hash));
   }
 
   async Validate(
     cookies,
     permissions: any,
     success: Function,
-    failiure: Function,
+    failiure: Function = noop,
     denied: Function = failiure
   ) {
     var payload: UserPayload;
@@ -67,22 +110,19 @@ export class Database {
         } catch (e) {
           return failiure();
         }
-        if (payload.username != null) {
-          let data = await this.getUser(payload.username)!;
-          if (parsePermissions(data!.permissions, permissions)) {
-            return success(data);
-          } else {
-            return denied(data);
+        if (payload.userid != null) {
+          let data = await this.getUser(payload.userid);
+          if (data) {
+            if (parsePermissions(data!.permissions, permissions)) {
+              return success(data);
+            } else {
+              return denied(data);
+            }
           }
-        } else {
-          return failiure();
         }
-      } else {
-        return failiure();
       }
-    } else {
-      return failiure();
     }
+    return failiure();
   }
 }
 function parsePermissions(present: any, required: any) {
@@ -91,7 +131,6 @@ function parsePermissions(present: any, required: any) {
   }
   let allowed = true;
   Object.entries(required).every((kvp) => {
-    /// wow thanks javascript lets have 2 methods that do exactly the same thing except one does exactly the opposite of what you think it should do
     let pre = present[kvp[0]];
     let req = required[kvp[0]];
     switch (typeof pre) {
@@ -124,17 +163,34 @@ function parsePermissions(present: any, required: any) {
 }
 
 export interface User {
+  uuid: string;
   username: string;
   hash: string;
-  friends: ObjectId[];
+  friends: string[];
   worker: any; // later
   permissions: object;
   notifications: Notification[];
-  files: ObjectId[];
-  boards: ObjectId[];
+  files: string[];
+  boards: string[];
+}
+export interface Room {
+  uuid: string;
+  name: string;
+  owner: string;
+  users: string[];
+  messages: ChatMessage[];
+  public: boolean;
+}
+export interface ChatMessage {
+  uuid: string;
+  sender: string;
+  message: string;
+  timestamp: Date;
+  //reply?
 }
 function constructUser(username: string, hash: string) {
   return {
+    uuid:randomUUID(),
     username,
     hash,
     friends: [],
@@ -142,10 +198,13 @@ function constructUser(username: string, hash: string) {
     permissions: {},
     notifications: [],
     files: [],
-    boards:[],
+    boards: [],
   };
 }
 export interface Notification {}
 export interface UserPayload {
-  username: string;
+  userid: string;
+}
+function updateUserSchema(olduser:any): User{
+  return olduser;
 }
