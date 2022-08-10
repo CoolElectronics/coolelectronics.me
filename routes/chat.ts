@@ -4,7 +4,7 @@ import { Socket } from "socket.io";
 import { App, CachedUser, parse, RequestType } from "../main";
 import xss from "xss";
 import { randomUUID } from "crypto";
-import { ClientRoom,ClientChatMessage } from "../clienttypes";
+import { ClientRoom, ClientChatMessage } from "../clienttypes";
 
 export default {
   path: "chat",
@@ -176,6 +176,37 @@ export default {
         }
       },
     },
+    {
+      path: "/inviteuser",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.roomuuid,
+        });
+        if (
+          room &&
+          room.users.includes(user.uuid) &&
+          !room.users.includes(req.body.invited)
+        ) {
+          let invited = await state.db.getUser(req.body.useruuid);
+          if (invited && user.friends.includes(invited.uuid)) {
+            await state.db.appendToList(
+              "Rooms",
+              { uuid: room.uuid },
+              "users",
+              invited.uuid
+            );
+            sendRoom(state, room);
+            res.sendStatus(200);
+            return;
+          }
+        }
+        res.sendStatus(400);
+      },
+    },
   ],
 };
 async function joinRoom(state: App, user: User, room: Room) {
@@ -188,12 +219,16 @@ async function joinRoom(state: App, user: User, room: Room) {
       "users",
       user.uuid
     );
-    for (let userid of room.users){
-      let socket: Socket | null = state.usercache.getVal(userid)?.[0]!;
-      if (socket){
-        let user = await state.db.getUser(userid)!;
-        sendRooms(state,user!,socket);
-      }
+    sendRoom(state, room);
+  }
+}
+// really awful name, but this sends the roomlist to all users, not just one socket
+async function sendRoom(state: App, room: Room) {
+  for (let userid of room.users) {
+    let socket: Socket | null = state.usercache.getVal(userid)?.[0]!;
+    if (socket) {
+      let user = await state.db.getUser(userid)!;
+      sendRooms(state, user!, socket);
     }
   }
 }

@@ -3,38 +3,38 @@ export interface ClientRoom {
   name: string;
   owner: string;
   users: {
-    name:string,
-    online:boolean,
+    name: string;
+    online: boolean;
   }[];
   public: boolean;
 }
 // export type ClientNotification = ClientFriendRequestNotification | ClientRoomInviteNotification;
 // export interface ClientFriendRequestNotifaction{
 //   kind: "a",
-//   
+//
 // }
-export interface ClientSelf{
-  username: string,
-  uuid: string,
-  permissions: object
+export interface ClientSelf {
+  username: string;
+  uuid: string;
+  permissions: object;
 }
 
 export interface ClientChatMessage {
   uuid: string;
-  roomuuid:string;
+  roomuuid: string;
   sender: string;
-  sendername:string;
+  sendername: string;
   message: string;
   timestamp: Date;
   sent: boolean;
   //reply?
 }
-export interface ClientFriendRequest{
-  type: "incoming" | "outbound",
-  from: string,
-  to: string,
+export interface ClientFriendRequest {
+  uuid: string;
+  from: string;
+  to: string;
 }
-
-export interface ClientSettings{
-
+export interface ClientUserSettings {
+  pushNotifs: boolean;
 }
+export interface ClientSettings {}

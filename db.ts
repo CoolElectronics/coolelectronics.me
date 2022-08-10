@@ -3,6 +3,7 @@ import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { noop } from "svelte/internal";
 import { randomUUID } from "crypto";
+import { ClientUserSettings } from "./clienttypes";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
@@ -10,7 +11,13 @@ const client = new MongoClient(process.env.MONGO_URI!);
 export async function connect(): Promise<Database> {
   let mongo = await client.connect();
   let database = new Database(mongo.db("database"));
-  await database.declareCollections(["Users", "Rooms", "Games", "Ftp","FriendRequests"]);
+  await database.declareCollections([
+    "Users",
+    "Rooms",
+    "Games",
+    "Ftp",
+    "FriendRequests",
+  ]);
   return database;
 }
 export class Database {
@@ -37,22 +44,56 @@ export class Database {
     propname: any,
     toappend: any
   ) {
-    try {
-      let obj = await this.database.collection(collection).findOne(selector);
-      if (obj) {
-        let array = obj[propname];
-        array.push(toappend);
-        let setter = {
-          $set: {},
-        };
-        setter.$set[propname] = array;
-        this.database.collection(collection).updateOne(selector, setter);
-      }
-    } catch (err) {
-      console.error(err);
+    let modifier = (prop: any[]) => prop.push(toappend);
+    await this.modifyOneProp(collection, selector, propname, modifier);
+  }
+  async removeFromList(
+    collection: string,
+    selector: object,
+    propname: any,
+    toremove: any
+  ) {
+    let modifier = (prop: any[], obj: any) =>
+      prop.filter((prop) => prop != toremove);
+    await this.modifyOneProp(collection, selector, propname, modifier);
+  }
+  async modifyOneProp(
+    collection: string,
+    selector: object,
+    propname: string,
+    modifier: (prop: any, obj: any) => Something
+  ) {
+    let obj = await this.database.collection(collection).findOne(selector);
+    if (obj) {
+      let set: Something = modifier(obj[propname], obj);
+      let setter = {
+        $set: {},
+      };
+      setter.$set[propname] = set;
+      await this.database.collection(collection).updateOne(selector, setter);
+    } else {
+      throw "something was null in " + collection;
     }
   }
-
+  async modifyOne(
+    collection: string,
+    selector: object,
+    modifier: (obj: Document) => void
+  ) {
+    let obj = await this.database
+      .collection(collection)
+      .findOne<Document>(selector);
+    if (obj) {
+      modifier(obj);
+      await this.database.collection(collection).replaceOne(selector, obj);
+    } else {
+      throw (
+        "could not update " +
+        collection +
+        " because the selected object does not exist"
+      );
+    }
+  }
   async getAll<T = Document>(collection: string): Promise<T[]> {
     return await this.database.collection(collection).find<T>({}).toArray();
   }
@@ -62,28 +103,32 @@ export class Database {
   ): Promise<T | null> {
     return await this.database.collection(collection).findOne<T>(selector);
   }
-  async addOne<T = Document>(collection:string,obj:T){
+  async addOne<T = Document>(collection: string, obj: T) {
     await this.database.collection(collection).insertOne(obj);
   }
 
-  async getUser(id:string): Promise<User | null> {
+  async getUser(id: string): Promise<User | null> {
     let user = await this.getOne<User>("Users", { uuid: id });
 
     let updated = updateUserSchema(user);
-    if (user != updated){
+    if (user != updated) {
       user = updated;
-      this.database.collection("Users").findOneAndReplace({uuid:id},updated);
+      this.database
+        .collection("Users")
+        .findOneAndReplace({ uuid: id }, updated);
     }
 
     return user;
   }
 
-  async getUserByName(username:string): Promise<User | null> {
-    let user = await this.getOne<User>("Users", { username});
+  async getUserByName(username: string): Promise<User | null> {
+    let user = await this.getOne<User>("Users", { username });
     let updated = updateUserSchema(user);
-    if (user != updated){
+    if (user != updated) {
       user = updated;
-      this.database.collection("Users").findOneAndReplace({username},updated);
+      this.database
+        .collection("Users")
+        .findOneAndReplace({ username }, updated);
     }
     return user;
   }
@@ -170,6 +215,7 @@ export interface User {
   worker: any; // later
   permissions: object;
   notifications: Notification[];
+  settings: ClientUserSettings;
   files: string[];
   boards: string[];
 }
@@ -188,15 +234,18 @@ export interface ChatMessage {
   timestamp: Date;
   //reply?
 }
-function constructUser(username: string, hash: string) {
+function constructUser(username: string, hash: string): User {
   return {
-    uuid:randomUUID(),
+    uuid: randomUUID(),
     username,
     hash,
     friends: [],
     worker: null,
     permissions: {},
     notifications: [],
+    settings: {
+      pushNotifs: true,
+    },
     files: [],
     boards: [],
   };
@@ -205,6 +254,8 @@ export interface Notification {}
 export interface UserPayload {
   userid: string;
 }
-function updateUserSchema(olduser:any): User{
+type Something = Defined extends void ? never : Defined;
+type Defined = any extends undefined ? never : any;
+function updateUserSchema(olduser: any): User {
   return olduser;
 }
