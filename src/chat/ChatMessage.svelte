@@ -29,12 +29,12 @@ import { onMount } from "svelte/internal";
     />
     <div class="-contents ml-2.5">
       <div class="flex items-center">
-        <p class="text text-lg">{message.sendername}</p>
+        <p class="text text-lg">{@html message.sendername}</p>
         <p class="ml-1.5 text-gray-300 text-xs">{ta.ago(message.timestamp)}</p>
       </div>
       <div class="flex -contents">
         <p class="text text-sm">
-          {message.message}
+          {@html message.message}
         </p>
       </div>
     </div>
@@ -44,7 +44,7 @@ import { onMount } from "svelte/internal";
   <div class = "minimized flex" bind:this={msgelement}>
     <div class = "pfp-filler"></div>
     <div class = "ml-2.5 text text-sm">
-      {message.message}
+      {@html message.message}
     </div>
   </div>
 {/if}
@@ -65,9 +65,6 @@ import { onMount } from "svelte/internal";
   }
   .pfp-filler{
   width: 50px;
-  }
-  .pfp {
-    grid-area: pfp;
   }
   .-contents {
     grid-area: contents;

@@ -1,11 +1,23 @@
 <script lang="ts">
   import jq from "jquery";
   import TopBar from "../components/TopBar.svelte";
+  import User from "../components/User.svelte";
+  import RoomSettings from "./RoomSettings.svelte";
   import io from "socket.io-client";
   import { ClientChatMessage, ClientRoom, ClientSelf } from "../../clienttypes";
-  import SelectButton from "./SelectButton.svelte";
+  import SelectButton from "../components/SelectButton.svelte";
   import ChatMessage from "./ChatMessage.svelte";
   import * as scrollto from "svelte-scrollto";
+
+  import {
+faBars,
+    faGear,
+    faGears,
+    faUserPlus,
+    faUsersRays,
+  } from "@fortawesome/free-solid-svg-icons";
+  import { FontAwesomeIcon } from "fontawesome-svelte";
+  import { noop } from "svelte/internal";
 
   let socket = io();
   let message = "";
@@ -15,13 +27,11 @@
   let publicrooms: ClientRoom[] = [];
   let self: ClientSelf;
 
+  let showroomsettings = false;
+
   let newRoomTitle = "";
-  let newRoomPublic:boolean = false;
+  let newRoomPublic: boolean = false;
 
-  let roombodyelm: HTMLElement;
-
-  let examplemsg = { message: "asd" } as unknown as ClientChatMessage;
-  // let notifs:ClientNotification[];
 
   jq.get("/api/me").then((s) => (self = s));
 
@@ -75,9 +85,9 @@
     selectedroom = { kind: "tab", type: MenuType.Public };
     publicrooms = await jq.get("/api/chat/fetchpublic");
   }
-  async function joinPublicRoom(uuid:string){
-    await jq.post("/api/chat/joinpublic",{
-      uuid
+  async function joinPublicRoom(uuid: string) {
+    await jq.post("/api/chat/joinpublic", {
+      uuid,
     });
   }
   async function createNewRoom() {
@@ -89,6 +99,8 @@
     messages[resp.uuid] = [];
     selectedroom = { kind: "room", id: resp.uuid };
   }
+  
+
   type SelectedRoom = Room | Tab;
   interface Room {
     kind: "room";
@@ -105,8 +117,11 @@
   }
 </script>
 
+{#if selectedroom && selectedroom.kind == "room"}
+  <RoomSettings bind:showroomsettings room = {rooms[selectedroom.id]}></RoomSettings>
+{/if}
 <main class="dark">
-  <TopBar />
+  <TopBar title="CoolChat" />
   <div id="selector" class="darkm2 p-3 flex flex-col shadow-black shadow-sm">
     {#each Object.values(rooms) as room}
       <SelectButton
@@ -118,10 +133,20 @@
   </div>
   {#if selectedroom && selectedroom.kind == "room"}
     <div class="c-contents" id="contents-room">
-      <div class="darkm2" id="room-bar">
-        <p class="text text-2xl m-4">room: {rooms[selectedroom.id].name}</p>
+      <div class="darkm2 flex justify-between" id="room-bar">
+        <div>
+          <p class="text text-2xl m-4">{rooms[selectedroom.id].name}</p>
+        </div>
+        <div class="p-2 flex items-center justify-end">
+          <button class="m-2" on:click={noop}>
+            <FontAwesomeIcon size="1.5x" icon={faUserPlus} inverse={true} />
+          </button>
+          <button class="m-2" on:click={()=> showroomsettings = true}>
+            <FontAwesomeIcon size="1.5x" icon={faGear} inverse={true} />
+          </button>
+        </div>
       </div>
-      <div id="contents-actions" class="darkm" />
+      <!-- <div id="contents-actions" class="darkm" /> -->
       <div id="room-body" class="darkm3">
         {#each messages[selectedroom.id] as message, i}
           <ChatMessage
@@ -144,9 +169,12 @@
       </div>
       <div id="room-list" class="darkm2">
         {#each rooms[selectedroom.id].users as user}
-          <p class="text-lg text">
-            user {user.name} is {user.online ? "online" : "offline"}
-          </p>
+          <div class = "flex justify-between items-center dark m-3 p-1 rounded-md">
+          <User {user}/>
+          <button>
+            <FontAwesomeIcon size = "lg" inverse = {true} icon = {faBars}/>
+          </button>
+          </div>
         {/each}
       </div>
     </div>
@@ -170,9 +198,9 @@
             <input class="mb-4" bind:value={newRoomTitle} />
             <div class="mb-6">
               <p class="text text-md inline">Make Public:</p>
-              <input type="checkbox" bind:checked ={newRoomPublic} />
+              <input type="checkbox" bind:checked={newRoomPublic} />
             </div>
-
+            
             <SelectButton text="Create" click={createNewRoom} />
           </div>
         </div>
@@ -187,13 +215,13 @@
       {:else if selectedroom && selectedroom.type == MenuType.Public}
         <div>
           {#each publicrooms as room}
-          <div class = "darkm3">
-           <p class = "text text-2xl">{room.name}</p>
-           <p class = "text text-lg">users: {room.users.length}</p>
-           <button on:click={()=>joinPublicRoom(room.uuid)}>Join</button>
-          </div>
+            <div class="darkm3">
+              <p class="text text-2xl">{room.name}</p>
+              <p class="text text-lg">users: {room.users.length}</p>
+              <button on:click={() => joinPublicRoom(room.uuid)}>Join</button>
+            </div>
           {/each}
-        </div> 
+        </div>
       {/if}
     </div>
   {/if}
@@ -207,10 +235,10 @@
     grid-template-rows: max-content auto;
     overflow: hidden;
   }
-  main > div {
-    /* warning: very dirty hack.  */
-    border-top: 4px solid var(--darkp3);
-  }
+  /* main > div { */
+  /* warning: very dirty hack.  */
+  /* border-top: 4px solid var(--darkp3); */
+  /* } */
   #contents-menu {
     display: grid;
     grid-template-columns: 10fr 90fr;
@@ -220,7 +248,7 @@
   }
   #contents-room {
     display: grid;
-    grid-template-areas: "bar actions" "body list" "box list";
+    grid-template-areas: "bar list" "body list" "box list";
     grid-template-columns: 85fr 15fr;
     grid-template-rows: max-content auto max-content;
     overflow-y: scroll;

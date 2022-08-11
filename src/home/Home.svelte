@@ -10,7 +10,7 @@
 </script>
 
 <main class = "dark">
-<TopBar></TopBar>
+<TopBar title = "Home"></TopBar>
 <h1 class="text">
 uhh yeah this is the homepage
 </h1>

@@ -1,7 +1,7 @@
 import '../app.css'
-import Admin from './Admin.svelte'
+import Account from './Account.svelte'
 
-const app = new Admin({
+const app = new Account({
   target: document.getElementById('app')
 })
 

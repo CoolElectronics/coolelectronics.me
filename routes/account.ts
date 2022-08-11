@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 import { randomUUID } from "crypto";
 
 export default {
-  path: "/account",
+  path: "account",
   route: (state: App, user: User, req: Request, res: Response) => {
     res.sendFile(global.appRoot + "/dist/src/account/account.html");
   },

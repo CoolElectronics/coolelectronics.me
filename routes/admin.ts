@@ -1,13 +1,13 @@
-import { App } from "../main";
+import { App, RequestType } from "../main";
 import { User } from "../db";
 import { Request, Response } from "express";
 import * as proc from "child_process";
 import axios from "axios";
 
 export default {
-  path: "/admin",
+  path: "admin",
   route: (state: App, user: User, req: Request, res: Response) => {
-    res.sendFile(global.appRoot + "/dist/src/admin/admin.html");
+    res.sendFile(global.rootDir + "/dist/src/admin/admin.html");
   },
   require: {
     Administrator: true,
@@ -15,6 +15,7 @@ export default {
   api: [
     {
       path: "/powerwake",
+      type: RequestType.POST,
       route: (state: App, user: User, req: Request, res: Response) => {
         proc.exec(
           `powerwake ${process.env.HOST_MAC}`,
@@ -29,6 +30,7 @@ export default {
     },
     {
       path: "/startcrd",
+      type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         try {
           let result = await axios.post(process.env.HOST_IP + "/api/crd");
@@ -42,7 +44,23 @@ export default {
       },
     },
     {
+      path: "/stopcrd",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try {
+          let result = await axios.post(process.env.HOST_IP + "/api/stopcrd");
+          res.send(result.data);
+        } catch (e: any) {
+          res.send(e.stack);
+        }
+      },
+      require: {
+        Administrator: true,
+      },
+    },
+    {
       path: "/startmc",
+      type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         try {
           let result = await axios.post(process.env.HOST_IP + "/api/mc");
@@ -57,6 +75,7 @@ export default {
     },
     {
       path: "/updateuserpermissions",
+      type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         await state.db.modifyOneProp(
           "Users",

@@ -104,7 +104,7 @@ export default {
                   };
                   return newmsg;
                 } else {
-                  console.error("unreachable state");
+                  console.error("unreachable state or deleted user");
                 }
               })
             );
@@ -265,6 +265,7 @@ async function constructClientRoom(
         return {
           name: user!.username,
           online,
+          uuid:user!.uuid,
         };
       })
     ),

@@ -5,6 +5,7 @@ import signRoute from "./routes/sign";
 import homeRoute from "./routes/home";
 import chatRoute from "./routes/chat";
 import accountRoute from "./routes/account";
+import adminRoute from "./routes/admin";
 import { connect, Database, User } from "./db";
 
 import cors from "cors";
@@ -49,10 +50,11 @@ global.rootDir = path.resolve(__dirname);
     })
   }
   
-  let routes: Route[] = [indexRoute, signRoute, homeRoute, chatRoute, accountRoute];
+  let routes: Route[] = [indexRoute, signRoute, homeRoute, chatRoute, accountRoute, adminRoute];
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use (["/pfp"], express.static(__dirname + "/pfp"));
+  app.use(express.static(__dirname + "/static"));
   routes.forEach((route) => {
     app.get("/"+route.path, (req, res, next) => {
       if (route.require) {

@@ -44,7 +44,7 @@ export class Database {
     propname: any,
     toappend: any
   ) {
-    let modifier = (prop: any[]) => prop.push(toappend);
+    let modifier = (prop: any[]) => [...prop,toappend];
     await this.modifyOneProp(collection, selector, propname, modifier);
   }
   async removeFromList(

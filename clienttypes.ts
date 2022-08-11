@@ -1,11 +1,11 @@
+// these are clones of the internal schemas for different things, but without sensitive or unneeded information
+// this module cannot import anything since it is required by 2 different esconfigs
+
 export interface ClientRoom {
   uuid: string;
   name: string;
   owner: string;
-  users: {
-    name: string;
-    online: boolean;
-  }[];
+  users: ClientUser[];
   public: boolean;
 }
 // export type ClientNotification = ClientFriendRequestNotification | ClientRoomInviteNotification;
@@ -17,6 +17,11 @@ export interface ClientSelf {
   username: string;
   uuid: string;
   permissions: object;
+}
+export interface ClientUser{
+  name:string;
+  online:boolean;
+  uuid:string;
 }
 
 export interface ClientChatMessage {

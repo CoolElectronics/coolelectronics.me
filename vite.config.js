@@ -19,7 +19,9 @@ export default defineConfig({
         main: resolve(root,"index.html"),
         sign: resolve(root,"sign","sign.html"),
         home: resolve(root,"home","home.html"),
-        chat: resolve(root,"chat","chat.html")
+        chat: resolve(root,"chat","chat.html"),
+        account: resolve(root,"account","account.html"),
+        admin: resolve(root,"admin","admin.html"),
       }
     }
   },
