@@ -28,16 +28,22 @@
   }
 </script>
 
-<div id="root" class="flex darkm1 text-center">
-  <p class = "text text-3xl">{title}</p>
-  <a href="/home">
-    <FontAwesomeIcon icon={faHouseUser} inverse={true} />
-  </a>
-  <button on:click={showNotifs} />
-  <Pfp size="large" name={username} />
-  <button on:click={signOut}>
-    <FontAwesomeIcon icon={faRightFromBracket} inverse={true} />
-  </button>
+<div id="root" class="flex items-center justify-between darkm1 text-center">
+  <div>
+    <p class="text text-3xl">{title}</p>
+  </div>
+  <div class = "flex items-center">
+    <a href="/home" class = "m-2">
+      <FontAwesomeIcon size = "lg" icon={faHouseUser} inverse={true} />
+    </a>
+    <button on:click={showNotifs} />
+    <a href="/account" class = "m-2">
+      <Pfp size="large" name={username} />
+    </a>
+    <button on:click={signOut} class = "m-2">
+      <FontAwesomeIcon size = "lg" icon={faRightFromBracket} inverse={true} />
+    </button>
+  </div>
 </div>
 
 <style>

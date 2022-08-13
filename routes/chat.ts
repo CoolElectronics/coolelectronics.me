@@ -1,10 +1,10 @@
-import { ChatMessage, Room, User } from "../db";
+import { ChatMessage, constructClientUser, Room, User } from "../db";
 import express, { Request, Response } from "express";
 import { Socket } from "socket.io";
 import { App, CachedUser, parse, RequestType } from "../main";
 import xss from "xss";
 import { randomUUID } from "crypto";
-import { ClientRoom, ClientChatMessage } from "../clienttypes";
+import { ClientRoom, ClientChatMessage, ClientUser } from "../clienttypes";
 
 export default {
   path: "chat",
@@ -18,7 +18,7 @@ export default {
     {
       path: "connected",
       route: async (state: App, user: User, req, socket: Socket) => {
-        sendRooms(state, user, socket);
+        sendRooms(state, user.uuid, socket);
       },
       require: { chat: {} },
     },
@@ -28,7 +28,7 @@ export default {
         let room: Room | null = await state.db.getOne("Rooms", {
           uuid: req.id,
         });
-        if (room != null) {
+        if (room != null && room.users.includes(user.uuid)) {
           // console.log("sen")
           // i check null right here
           let sanitized = xss(req.message).normalize();
@@ -126,7 +126,7 @@ export default {
         let sanitizedname = xss(req.body.name).normalize();
         if (sanitizedname != "" && sanitizedname != null) {
           let room: Room = {
-            name: req.body.name,
+            name: sanitizedname,
             owner: user.uuid,
             users: [user.uuid],
             messages: [],
@@ -184,25 +184,172 @@ export default {
       },
       route: async (state: App, user: User, req: Request, res: Response) => {
         let room: Room | null = await state.db.getOne("Rooms", {
-          uuid: req.body.roomuuid,
+          uuid: req.body.uuid,
         });
+        // console.log("here");
         if (
           room &&
+          user.uuid == room.owner &&
           room.users.includes(user.uuid) &&
           !room.users.includes(req.body.invited)
         ) {
-          let invited = await state.db.getUser(req.body.useruuid);
+          // console.log("room exists");
+          let invited = await state.db.getUser(req.body.invited);
           if (invited && user.friends.includes(invited.uuid)) {
+            // console.log("invitied ixists");
             await state.db.appendToList(
               "Rooms",
               { uuid: room.uuid },
               "users",
               invited.uuid
             );
-            sendRoom(state, room);
+            room = await state.db.getOne("Rooms", { uuid: req.body.uuid })!;
+            sendRoom(state, room!);
             res.sendStatus(200);
             return;
           }
+        }
+        res.sendStatus(400);
+      },
+    },
+    {
+      path: "/removeuser",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.uuid,
+        });
+        if (
+          room &&
+          room.users.includes(user.uuid) &&
+          room.users.includes(req.body.user)
+        ) {
+          let removed = await state.db.getUser(req.body.user);
+          if (removed) {
+            await state.db.removeFromList(
+              "Rooms",
+              { uuid: room.uuid },
+              "users",
+              removed.uuid
+            );
+            room = await state.db.getOne("Rooms", { uuid: req.body.uuid });
+            sendRoom(state, room!);
+            // sendroom won't send it to the removed user because they aren't in the room anymore
+            let cachedremoved: [Socket | null, CachedUser] | null =
+              state.usercache.getVal(removed.uuid);
+            if (cachedremoved && cachedremoved[0]) {
+              sendRooms(state, removed.uuid, cachedremoved[0]);
+            }
+            res.sendStatus(200);
+            return;
+          }
+        }
+        res.sendStatus(400);
+      },
+    },
+    {
+      path: "/invitablefriends",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.uuid,
+        });
+        if (room) {
+          let clientusers: ClientUser[] = [];
+          for (let userid of user.friends) {
+            if (!room.users.includes(userid)) {
+              let clientuser = await constructClientUser(state, userid);
+              clientusers.push(clientuser);
+            }
+          }
+          res.send(clientusers);
+          return;
+        }
+        res.sendStatus(400);
+      },
+    },
+    {
+      path: "/changeroomsettings",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.uuid,
+        });
+        if (room && user.uuid == room.owner) {
+          let sanitizedname = xss(req.body.name).normalize();
+          if (sanitizedname != "") {
+            await state.db.modifyOne("Rooms", { uuid: room.uuid }, (room) => {
+              room.name = sanitizedname;
+              room.public = req.body.public;
+            });
+            await sendRoom(state, room);
+            res.sendStatus(200);
+            return;
+          }
+        }
+        res.sendStatus(400);
+      },
+    },
+    {
+      path: "/deleteroom",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.uuid,
+        });
+        if (room && user.uuid == room.owner) {
+          await state.db.database.collection("Rooms").deleteOne({
+            uuid: req.body.uuid,
+          });
+          for (let eachuser of room.users) {
+            let cached: [Socket | null, CachedUser] | null =
+              state.usercache.getVal(eachuser);
+            if (cached && cached[0]) {
+              sendRooms(state, eachuser, cached[0]);
+            }
+          }
+        }
+      },
+    },
+    {
+      path: "/leaveroom",
+      type: RequestType.POST,
+      require: {
+        chat: {},
+      },
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let room: Room | null = await state.db.getOne("Rooms", {
+          uuid: req.body.uuid,
+        });
+        if (room && room.users.includes(user.uuid)) {
+          await state.db.removeFromList(
+            "Rooms",
+            { uuid: room.uuid },
+            "users",
+            user.uuid
+          );
+          room = await state.db.getOne("Rooms", { uuid: req.body.uuid });
+          sendRoom(state, room!);
+          // sendroom won't send it to the removed user because they aren't in the room anymore
+          let cachedremoved: [Socket | null, CachedUser] | null =
+            state.usercache.getVal(user.uuid);
+          if (cachedremoved && cachedremoved[0]) {
+            sendRooms(state, user.uuid, cachedremoved[0]);
+          }
+          res.sendStatus(200);
+          return;
         }
         res.sendStatus(400);
       },
@@ -211,7 +358,7 @@ export default {
 };
 async function joinRoom(state: App, user: User, room: Room) {
   if (!room.users.includes(user.uuid)) {
-    state.db.appendToList(
+    await state.db.appendToList(
       "Rooms",
       {
         uuid: room.uuid,
@@ -219,31 +366,31 @@ async function joinRoom(state: App, user: User, room: Room) {
       "users",
       user.uuid
     );
-    sendRoom(state, room);
+    let nroom = await state.db.getOne<Room>("Rooms", { uuid: room.uuid });
+    sendRoom(state, nroom!);
   }
 }
-// really awful name, but this sends the roomlist to all users, not just one socket
+// really awful name, but this sends the roomlist to all users in a room, not just one socket
 async function sendRoom(state: App, room: Room) {
   for (let userid of room.users) {
     let socket: Socket | null = state.usercache.getVal(userid)?.[0]!;
     if (socket) {
-      let user = await state.db.getUser(userid)!;
-      sendRooms(state, user!, socket);
+      sendRooms(state, userid, socket);
+    } else {
     }
   }
 }
-async function sendRooms(state: App, user: User, socket: Socket) {
+async function sendRooms(state: App, userid: string, socket: Socket) {
   let rooms: Room[] = await state.db.getAll<Room>("Rooms");
   let clientrooms: ClientRoom[] = [];
   for (let room of rooms) {
-    if (room.users.includes(user.uuid)) {
+    if (room.users.includes(userid)) {
       let clientroom = await constructClientRoom(state, room);
       clientrooms.push(clientroom);
     }
   }
   socket.emit("chat:rooms", clientrooms);
 }
-
 async function constructClientRoom(
   state: App,
   room: Room
@@ -265,7 +412,7 @@ async function constructClientRoom(
         return {
           name: user!.username,
           online,
-          uuid:user!.uuid,
+          uuid: user!.uuid,
         };
       })
     ),

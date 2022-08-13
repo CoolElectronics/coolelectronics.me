@@ -1,13 +1,13 @@
 import { App, RequestType } from "../main";
-import { User } from "../db";
-import { ClientFriendRequest } from "../clienttypes";
+import { constructClientUser, FriendRequest, User } from "../db";
+import { ClientFriendRequest, ClientUser } from "../clienttypes";
 import { Request, Response } from "express";
 import { randomUUID } from "crypto";
 
 export default {
   path: "account",
   route: (state: App, user: User, req: Request, res: Response) => {
-    res.sendFile(global.appRoot + "/dist/src/account/account.html");
+    res.sendFile(global.rootDir + "/dist/src/account/account.html");
   },
   require: {},
   api: [
@@ -35,10 +35,46 @@ export default {
       require: {},
     },
     {
+      path: "/availablefriends",
+      type: RequestType.GET,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let users = await state.db.getAll<User>("Users");
+        let clientusers:ClientUser[] = [];
+        for (let usr of users){
+          if (!user.friends.includes(usr.uuid) && usr.uuid != user.uuid){
+            clientusers.push(await constructClientUser(state,usr.uuid));
+          }
+        }
+        res.send(clientusers);
+      },
+      require:{},
+    },
+    {
+      path: "/myfriends",
+      type: RequestType.GET,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        let clientusers:ClientUser[] = [];
+        for (let friend of user.friends){
+          clientusers.push(await constructClientUser(state,friend));
+        }
+        res.send(clientusers);
+      },
+      require:{}
+    },
+    {
       path: "/requestfriend",
       type: RequestType.POST,
-      route: (state: App, user: User, req: Request, res: Response) => {
-        if (!user.friends.includes(req.body.uuid)) {
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        // not the cleanest. the friends system could have definitely been done better.
+        //
+        let alreadyexists = false;
+        let allreqs = await state.db.getAll<FriendRequest>("FriendRequests");
+        for (let req of allreqs){
+          if (req.to == user.uuid || req.from == user.uuid){
+              alreadyexists = true;
+          }
+        }
+        if (!user.friends.includes(req.body.uuid) && !alreadyexists) {
           state.db.addOne("FriendRequests", {
             uuid: randomUUID(),
             from: user.uuid,
@@ -84,17 +120,18 @@ export default {
       path: "/friendrequests",
       type: RequestType.GET,
       route: async (state: App, user: User, req: Request, res: Response) => {
-        let requests = await state.db.getAll("FriendRequests");
+        let requests = await state.db.getAll<FriendRequest>("FriendRequests");
         let clientrequests: ClientFriendRequest[] = [];
         for (let request of requests) {
           if (request.from == user.uuid || request.to == user.uuid) {
             clientrequests.push({
               uuid: request.uuid,
-              from: request.from,
-              to: request.to,
+              from: await constructClientUser(state,request.from),
+              to: await constructClientUser(state,request.to),
             });
           }
         }
+        res.send(clientrequests);
       },
       require: {},
     },
@@ -102,22 +139,23 @@ export default {
       path: "/requestrespond",
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
-        let request: ClientFriendRequest | null = await state.db.getOne(
+        let request: FriendRequest | null = await state.db.getOne(
           "FriendRequests",
           {
             uuid: req.body.uuid,
           }
         );
         if (request && request.to == user.uuid) {
-          if (req.body.accept) {
+          if (req.body.accept === "true") {
+            // idk sometimes express makes it a string
             await state.db.appendToList(
-              "User",
+              "Users",
               { uuid: request.to },
               "friends",
               request.from
             );
             await state.db.appendToList(
-              "User",
+              "Users",
               { uuid: request.from },
               "friends",
               request.to

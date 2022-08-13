@@ -3,7 +3,9 @@ import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { noop } from "svelte/internal";
 import { randomUUID } from "crypto";
-import { ClientUserSettings } from "./clienttypes";
+import { ClientUser, ClientUserSettings } from "./clienttypes";
+import { App, CachedUser } from "./main";
+import { Socket } from "socket.io";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
@@ -234,6 +236,11 @@ export interface ChatMessage {
   timestamp: Date;
   //reply?
 }
+export interface FriendRequest{
+  uuid:string,
+  from:string,
+  to:string,
+}
 function constructUser(username: string, hash: string): User {
   return {
     uuid: randomUUID(),
@@ -249,6 +256,26 @@ function constructUser(username: string, hash: string): User {
     files: [],
     boards: [],
   };
+}
+export async function constructClientUser(
+  state: App,
+  uuid: string
+): Promise<ClientUser> {
+  let cached: [Socket | null, CachedUser] | null = state.usercache.getVal(uuid);
+  if (cached) {
+    return {
+      name: cached[1].username,
+      online: cached[1].online,
+      uuid,
+    };
+  } else {
+    let user = await state.db.getUser(uuid);
+    return {
+      name: user!.username,
+      online: false,
+      uuid,
+    };
+  }
 }
 export interface Notification {}
 export interface UserPayload {

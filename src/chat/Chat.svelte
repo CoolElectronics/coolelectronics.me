@@ -4,20 +4,27 @@
   import User from "../components/User.svelte";
   import RoomSettings from "./RoomSettings.svelte";
   import io from "socket.io-client";
-  import { ClientChatMessage, ClientRoom, ClientSelf } from "../../clienttypes";
+  import {
+    ClientChatMessage,
+    ClientRoom,
+    ClientSelf,
+    ClientUser,
+  } from "../../clienttypes";
   import SelectButton from "../components/SelectButton.svelte";
   import ChatMessage from "./ChatMessage.svelte";
   import * as scrollto from "svelte-scrollto";
 
   import {
-faBars,
+    faBars,
     faGear,
     faGears,
+    faRightFromBracket,
     faUserPlus,
     faUsersRays,
   } from "@fortawesome/free-solid-svg-icons";
   import { FontAwesomeIcon } from "fontawesome-svelte";
   import { noop } from "svelte/internal";
+  import  UserDropdown  from "./UserDropdown.svelte";
 
   let socket = io();
   let message = "";
@@ -28,10 +35,11 @@ faBars,
   let self: ClientSelf;
 
   let showroomsettings = false;
+  let showuserdropdown = false;
+  let selecteduser: ClientUser | null;
 
   let newRoomTitle = "";
   let newRoomPublic: boolean = false;
-
 
   jq.get("/api/me").then((s) => (self = s));
 
@@ -43,7 +51,7 @@ faBars,
   });
   socket.on("chat:rooms", (res: ClientRoom[]) => {
     console.log("recieved rooms");
-    console.log(res);
+    rooms = {};
     for (let room of res) {
       if (!selectedroom) {
         selectedroom = { kind: "room", id: room.uuid };
@@ -53,6 +61,12 @@ faBars,
         messages[room.uuid] = [];
         fetch(room.uuid);
       }
+    }
+    if (selectedroom.kind == "room" && !rooms[selectedroom.id]) {
+      selectedroom = {
+        kind: "tab",
+        type: MenuType.Public,
+      };
     }
   });
 
@@ -74,9 +88,6 @@ faBars,
     messages[roomid] = resp;
   }
 
-  async function selectFriends() {
-    selectedroom = { kind: "tab", type: MenuType.Friends };
-  }
   async function selectNewRoom() {
     selectedroom = { kind: "tab", type: MenuType.NewRoom };
   }
@@ -99,7 +110,20 @@ faBars,
     messages[resp.uuid] = [];
     selectedroom = { kind: "room", id: resp.uuid };
   }
-  
+  async function leaveRoom() {
+    if (selectedroom.kind == "room") {
+      let resp = await jq.post("/api/chat/leaveroom", {
+        uuid: selectedroom.id,
+      });
+      selectedroom = null as unknown as SelectedRoom; // yeah yeah whatever idc
+    }
+  }
+  async function activateDropdown(e: MouseEvent, user: string) {
+    showuserdropdown = true;
+    selecteduser = await jq.post("/api/user", {
+      uuid: user,
+    });
+  }
 
   type SelectedRoom = Room | Tab;
   interface Room {
@@ -111,14 +135,16 @@ faBars,
     type: MenuType;
   }
   enum MenuType {
-    Friends,
     Public,
     NewRoom,
   }
 </script>
 
 {#if selectedroom && selectedroom.kind == "room"}
-  <RoomSettings bind:showroomsettings room = {rooms[selectedroom.id]}></RoomSettings>
+  <RoomSettings bind:showroomsettings room={rooms[selectedroom.id]} />
+{/if}
+{#if showuserdropdown && selecteduser}
+  <UserDropdown bind:showuserdropdown user = {selecteduser}/>
 {/if}
 <main class="dark">
   <TopBar title="CoolChat" />
@@ -129,20 +155,30 @@ faBars,
         click={() => (selectedroom = { kind: "room", id: room.uuid })}
       />
     {/each}
-    <SelectButton text="Menu" click={selectFriends} />
+    <SelectButton text="Menu" click={selectPublic} />
   </div>
   {#if selectedroom && selectedroom.kind == "room"}
+    {@const room = rooms[selectedroom.id]}
     <div class="c-contents" id="contents-room">
       <div class="darkm2 flex justify-between" id="room-bar">
         <div>
-          <p class="text text-2xl m-4">{rooms[selectedroom.id].name}</p>
+          <p class="text text-2xl m-4">{@html room.name}</p>
         </div>
         <div class="p-2 flex items-center justify-end">
-          <button class="m-2" on:click={noop}>
-            <FontAwesomeIcon size="1.5x" icon={faUserPlus} inverse={true} />
-          </button>
-          <button class="m-2" on:click={()=> showroomsettings = true}>
-            <FontAwesomeIcon size="1.5x" icon={faGear} inverse={true} />
+          {#if room.owner == self.uuid}
+            <button class="m-2" on:click={() => (showroomsettings = true)}>
+              <FontAwesomeIcon size="1.5x" icon={faUserPlus} inverse={true} />
+            </button>
+            <button class="m-2" on:click={() => (showroomsettings = true)}>
+              <FontAwesomeIcon size="1.5x" icon={faGear} inverse={true} />
+            </button>
+          {/if}
+          <button class="m-2" on:click={leaveRoom}>
+            <FontAwesomeIcon
+              size="1.5x"
+              icon={faRightFromBracket}
+              inverse={true}
+            />
           </button>
         </div>
       </div>
@@ -150,6 +186,7 @@ faBars,
       <div id="room-body" class="darkm3">
         {#each messages[selectedroom.id] as message, i}
           <ChatMessage
+            clickpfp={(e) => activateDropdown(e, message.sender)}
             {self}
             {message}
             prev={messages[selectedroom.id][i - 1]}
@@ -169,11 +206,16 @@ faBars,
       </div>
       <div id="room-list" class="darkm2">
         {#each rooms[selectedroom.id].users as user}
-          <div class = "flex justify-between items-center dark m-3 p-1 rounded-md">
-          <User {user}/>
-          <button>
-            <FontAwesomeIcon size = "lg" inverse = {true} icon = {faBars}/>
-          </button>
+          <div
+            class="flex justify-between items-center dark m-3 p-1 rounded-md"
+          >
+            <User {user} />
+            <button
+              on:click={(e) => activateDropdown(e, user.uuid)}
+              class="m-2"
+            >
+              <FontAwesomeIcon size="lg" inverse={true} icon={faBars} />
+            </button>
           </div>
         {/each}
       </div>
@@ -181,12 +223,15 @@ faBars,
   {:else}
     <div class="c-contents" id="contents-menu">
       <div class="darkm3 p-3 flex flex-col shadow-black shadow-sm">
-        <SelectButton text="Friends" click={selectFriends} />
         <SelectButton text="Explore" click={selectPublic} />
         <SelectButton
           classes="justify-self-end"
           text="Create Room"
           click={selectNewRoom}
+        />
+        <SelectButton
+          text="Settings"
+          click={() => window.location.replace("/account")}
         />
       </div>
       {#if selectedroom && selectedroom.type == MenuType.NewRoom}
@@ -200,16 +245,8 @@ faBars,
               <p class="text text-md inline">Make Public:</p>
               <input type="checkbox" bind:checked={newRoomPublic} />
             </div>
-            
+
             <SelectButton text="Create" click={createNewRoom} />
-          </div>
-        </div>
-      {:else if selectedroom && selectedroom.type == MenuType.Friends}
-        <div class="a">
-          <div>
-            <p class="text text-size-3xl text-center">
-              Incoming Friend Requests
-            </p>
           </div>
         </div>
       {:else if selectedroom && selectedroom.type == MenuType.Public}

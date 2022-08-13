@@ -36,8 +36,8 @@ export interface ClientChatMessage {
 }
 export interface ClientFriendRequest {
   uuid: string;
-  from: string;
-  to: string;
+  from: ClientUser;
+  to: ClientUser;
 }
 export interface ClientUserSettings {
   pushNotifs: boolean;
