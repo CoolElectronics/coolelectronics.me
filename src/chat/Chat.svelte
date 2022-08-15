@@ -3,7 +3,7 @@
   import TopBar from "../components/TopBar.svelte";
   import User from "../components/User.svelte";
   import RoomSettings from "./RoomSettings.svelte";
-  import io from "socket.io-client";
+  import io, { Socket } from "socket.io-client";
   import {
     ClientChatMessage,
     ClientRoom,
@@ -16,6 +16,7 @@
 
   import {
     faBars,
+    faCirclePlus,
     faGear,
     faGears,
     faRightFromBracket,
@@ -23,14 +24,17 @@
     faUsersRays,
   } from "@fortawesome/free-solid-svg-icons";
   import { FontAwesomeIcon } from "fontawesome-svelte";
-  import { noop } from "svelte/internal";
-  import  UserDropdown  from "./UserDropdown.svelte";
+  import { noop, onMount } from "svelte/internal";
+  import UserDropdown from "./UserDropdown.svelte";
 
-  let socket = io();
+  let socket:Socket = io();
   let message = "";
   let selectedroom: SelectedRoom;
+  
   let rooms: { [name: string]: ClientRoom } = {};
   let messages: { [name: string]: ClientChatMessage[] } = {};
+  let unread: { [name:string]: number } = {};
+
   let publicrooms: ClientRoom[] = [];
   let self: ClientSelf;
 
@@ -40,6 +44,15 @@
 
   let newRoomTitle = "";
   let newRoomPublic: boolean = false;
+  let fileinput:HTMLInputElement;
+  let uploadedImage: string | null;
+  let messageFormData: FormData | null;
+
+  let prev: ChatMessage | null;
+
+  let focused = true;
+  window.onblur = () => (focused = false);
+  window.onfocus = () => (focused = true);
 
   jq.get("/api/me").then((s) => (self = s));
 
@@ -48,6 +61,15 @@
   socket.on("chat:newmessage", (res) => {
     messages[res.room].push(res.msg);
     messages = messages; // svelte moment
+    if (document.visibilityState == "hidden"){
+      console.log("sending notification")
+        new Notification(res.msg.sendername,{
+          body:res.msg.message,
+          icon: `/pfp/${res.msg.sendername}.png`
+        }).addEventListener("click",()=>{
+          window.open("/chat");
+        })
+    }
   });
   socket.on("chat:rooms", (res: ClientRoom[]) => {
     console.log("recieved rooms");
@@ -59,6 +81,7 @@
       rooms[room.uuid] = room;
       if (!messages[room.uuid]) {
         messages[room.uuid] = [];
+        unread[room.uuid] = 0;
         fetch(room.uuid);
       }
     }
@@ -124,6 +147,17 @@
       uuid: user,
     });
   }
+  function attachImage(){
+    fileinput.click();  
+  }
+  function addImage(this:any,e){
+    console.log(e);
+    let reader = new FileReader();
+    reader.addEventListener("load",()=>{
+      // uploadedImage = reader.result;
+    });
+    reader.readAsDataURL(this.files[0]);
+  }
 
   type SelectedRoom = Room | Tab;
   interface Room {
@@ -144,10 +178,11 @@
   <RoomSettings bind:showroomsettings room={rooms[selectedroom.id]} />
 {/if}
 {#if showuserdropdown && selecteduser}
-  <UserDropdown bind:showuserdropdown user = {selecteduser}/>
+  <UserDropdown bind:showuserdropdown user={selecteduser} />
 {/if}
 <main class="dark">
-  <TopBar title="CoolChat" />
+  <input on:change = {addImage} class = "hidden" type = "file" bind:this = {fileinput} accept = "image/jpeg, image/png, image/jpg">
+  <TopBar showtoasts = {false} bind:socket {self} title="CoolChat" />
   <div id="selector" class="darkm2 p-3 flex flex-col shadow-black shadow-sm">
     {#each Object.values(rooms) as room}
       <SelectButton
@@ -193,16 +228,27 @@
           />
         {/each}
       </div>
-      <div id="room-box" class="darkm2 p-4">
-        <input
-          bind:value={message}
+      <div id="room-box" class="darkm2 p-4 flex items-center">
+        <div
+          spellcheck="false"
+          class="h-min w-full relative outline-none whitespace-pre-wrap break-words dark text text-sm rounded-md"
+          autocorrect="off"
+          contenteditable="true"
+          bind:innerHTML={message}
           placeholder="send a message..."
-          on:keyup={(e) => {
+          on:keydown={(e) => {
             if (e.key == "Enter") {
-              sendmessage();
+              if (!e.shiftKey){
+                sendmessage();
+                e.preventDefault();
+                return false;
+              }
             }
           }}
         />
+        <button class = "m-2" on:click = {attachImage}>
+          <FontAwesomeIcon size = "1.5x" icon = {faCirclePlus} inverse = {true}/>
+        </button>
       </div>
       <div id="room-list" class="darkm2">
         {#each rooms[selectedroom.id].users as user}

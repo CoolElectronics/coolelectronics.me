@@ -9,6 +9,7 @@ import { onMount } from "svelte/internal";
   export let prev: ClientChatMessage | null;
 
   export let clickpfp:Function;
+  export let classes = "";
   
   let msgelement:HTMLDivElement;
   let minimized = false;
@@ -23,7 +24,7 @@ import { onMount } from "svelte/internal";
 </script>
 
 {#if !minimized}
-  <div class="message" bind:this={msgelement}>
+  <div class={"message " + classes} bind:this={msgelement}>
     <button on:click = {(e)=> clickpfp(e,message.sender)}>
     <Pfp
       classes="inline-block pfp mr-5"

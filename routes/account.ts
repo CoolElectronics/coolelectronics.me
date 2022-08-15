@@ -3,6 +3,8 @@ import { constructClientUser, FriendRequest, User } from "../db";
 import { ClientFriendRequest, ClientUser } from "../clienttypes";
 import { Request, Response } from "express";
 import { randomUUID } from "crypto";
+import Busboy from "busboy";
+import busboy from "busboy";
 
 export default {
   path: "account",
@@ -174,6 +176,41 @@ export default {
       },
       require: {},
     },
+    {
+      path: "/uploadpfp",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try{
+          if (req.files){
+            let pfp:any = req.files.file;
+            if (pfp.mimetype == "image/png" || pfp.mimetype == "image/jpeg"){
+              if (pfp.size < 26000000){
+                pfp.mv("./pfp/"+user.username+".png");
+                res.send({
+                  status:true
+                })
+              }
+            }else{
+              res.send({
+                success:false,
+                message: "unsupported image type",
+              })
+            }
+          }else{
+            res.send({
+              success:false,
+              message:"No file uploaded"
+            });
+          }
+        } catch(e) {
+          console.log(e);
+          res.status(500).send(e);
+        }
+      },
+      require:{
+        chat:{}
+      }
+    }
   ],
   listeners: [],
 };

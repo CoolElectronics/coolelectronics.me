@@ -371,7 +371,7 @@ async function joinRoom(state: App, user: User, room: Room) {
   }
 }
 // really awful name, but this sends the roomlist to all users in a room, not just one socket
-async function sendRoom(state: App, room: Room) {
+export async function sendRoom(state: App, room: Room) {
   for (let userid of room.users) {
     let socket: Socket | null = state.usercache.getVal(userid)?.[0]!;
     if (socket) {

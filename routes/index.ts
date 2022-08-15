@@ -2,8 +2,9 @@ import express, { Request, Response } from "express";
 import { Socket } from "socket.io";
 import { noop } from "svelte/internal";
 import { App, CachedUser, parse, RequestType } from "../main";
-import { constructClientUser, User } from "../db";
+import { constructClientUser, Room, User } from "../db";
 import { ClientSelf } from "../clienttypes";
+import { sendRoom } from "./chat";
 
 export function socketConnect(state: App, socket: Socket) {
   let cookies = parse(socket.request.headers.cookie);
@@ -11,16 +12,32 @@ export function socketConnect(state: App, socket: Socket) {
     cookies,
     {},
     (user: User) => {
+      let cached: [Socket | null,CachedUser] | null = state.usercache.getVal(user.uuid);
+      let send = !cached || !cached[1].online;
+
       state.usercache.setVal(user.uuid, socket, {
         username: user.username,
         online: true,
+        setOfflineTimer: null,
       });
+      if (send){
+         userStatusUpdate(state,user.uuid);
+      }
+
+
       socket.on("disconnect", () => {
-        let dat: [Socket | null, CachedUser] = state.usercache.getVal(
+        let [socket,cacheduser]: [Socket | null, CachedUser] = state.usercache.getVal(
           user.uuid
         )!;
-        dat[1].online = false;
-        state.usercache.setVal(user.uuid, null, dat[1]);
+        if  (cacheduser.setOfflineTimer){
+          clearTimeout(cacheduser.setOfflineTimer);
+        }
+        cacheduser.setOfflineTimer = setTimeout(()=>{
+          cacheduser.online = false;
+          userStatusUpdate(state,user.uuid);
+        },10000);
+        cacheduser.online = false;
+        state.usercache.setVal(user.uuid, null, cacheduser);
       });
     },
     () => {},
@@ -67,3 +84,11 @@ export default {
     },
   ],
 };
+async function userStatusUpdate(state:App,userid:string){
+  let rooms = await state.db.getAll<Room>("Rooms");
+  for (let room of rooms){
+    if (room.users.includes(userid)){
+      sendRoom(state,room);
+    }
+  }
+}

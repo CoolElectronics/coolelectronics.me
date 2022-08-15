@@ -20,6 +20,8 @@ import { Server, Socket } from "socket.io";
 
 import http from "http";
 import { listeners } from "process";
+import fileUpload from "express-fileupload";
+
 const port = 8080;
 
 const app = express();
@@ -33,6 +35,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
+app.use(fileUpload({
+    createParentPath:true,
+    limits:{ fileSize: 5000000000 },
+}))
 
 global.rootDir = path.resolve(__dirname);
 
@@ -40,13 +46,14 @@ global.rootDir = path.resolve(__dirname);
   let state: App = {
     db: await connect(),
     io,
-    usercache: new AppCache<string,Socket|null,CachedUser>()
+    usercache: new AppCache<string,Socket|null,CachedUser>(),
   };
   let allusers = await state.db.getAll<User>("Users");
   for (let user of allusers){
     state.usercache.addItem(user.uuid,null,{
       username:user.username,
-      online:false
+      online:false,
+      setOfflineTimer: null,
     })
   }
   
@@ -144,6 +151,7 @@ export interface App {
 export interface CachedUser{
   online:boolean;
   username:string;
+  setOfflineTimer: ReturnType<typeof setTimeout> | null;
 }
 export const enum RequestType {
   GET,

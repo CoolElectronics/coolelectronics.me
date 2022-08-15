@@ -7,13 +7,12 @@ const outDir = resolve(__dirname,"dist");
 
 export default defineConfig({
   plugins: [svelte()],
-  server: {
-    port: 3000,
-  },
   build: {
     dev:true,
+    minify:false,
     target: 'esnext',
     outDir: "dist",
+    sourcemap:true,
     rollupOptions:{
       input:{
         main: resolve(root,"index.html"),
