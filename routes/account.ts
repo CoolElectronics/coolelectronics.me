@@ -41,27 +41,27 @@ export default {
       type: RequestType.GET,
       route: async (state: App, user: User, req: Request, res: Response) => {
         let users = await state.db.getAll<User>("Users");
-        let clientusers:ClientUser[] = [];
-        for (let usr of users){
-          if (!user.friends.includes(usr.uuid) && usr.uuid != user.uuid){
-            clientusers.push(await constructClientUser(state,usr.uuid));
+        let clientusers: ClientUser[] = [];
+        for (let usr of users) {
+          if (!user.friends.includes(usr.uuid) && usr.uuid != user.uuid) {
+            clientusers.push(await constructClientUser(state, usr.uuid));
           }
         }
         res.send(clientusers);
       },
-      require:{},
+      require: {},
     },
     {
       path: "/myfriends",
       type: RequestType.GET,
       route: async (state: App, user: User, req: Request, res: Response) => {
-        let clientusers:ClientUser[] = [];
-        for (let friend of user.friends){
-          clientusers.push(await constructClientUser(state,friend));
+        let clientusers: ClientUser[] = [];
+        for (let friend of user.friends) {
+          clientusers.push(await constructClientUser(state, friend));
         }
         res.send(clientusers);
       },
-      require:{}
+      require: {},
     },
     {
       path: "/requestfriend",
@@ -71,9 +71,9 @@ export default {
         //
         let alreadyexists = false;
         let allreqs = await state.db.getAll<FriendRequest>("FriendRequests");
-        for (let req of allreqs){
-          if (req.to == user.uuid || req.from == user.uuid){
-              alreadyexists = true;
+        for (let req of allreqs) {
+          if (req.to == user.uuid || req.from == user.uuid) {
+            alreadyexists = true;
           }
         }
         if (!user.friends.includes(req.body.uuid) && !alreadyexists) {
@@ -128,8 +128,8 @@ export default {
           if (request.from == user.uuid || request.to == user.uuid) {
             clientrequests.push({
               uuid: request.uuid,
-              from: await constructClientUser(state,request.from),
-              to: await constructClientUser(state,request.to),
+              from: await constructClientUser(state, request.from),
+              to: await constructClientUser(state, request.to),
             });
           }
         }
@@ -180,37 +180,50 @@ export default {
       path: "/uploadpfp",
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
-        try{
-          if (req.files){
-            let pfp:any = req.files.file;
-            if (pfp.mimetype == "image/png" || pfp.mimetype == "image/jpeg"){
-              if (pfp.size < 26000000){
-                pfp.mv("./pfp/"+user.username+".png");
+        try {
+          if (req.files) {
+            let pfp: any = req.files.file;
+            if (pfp.mimetype == "image/png" || pfp.mimetype == "image/jpeg") {
+              if (pfp.size < 26000000) {
+                pfp.mv("./pfp/" + user.username + ".png");
                 res.send({
-                  status:true
-                })
+                  status: true,
+                });
               }
-            }else{
+            } else {
               res.send({
-                success:false,
+                success: false,
                 message: "unsupported image type",
-              })
+              });
             }
-          }else{
+          } else {
             res.send({
-              success:false,
-              message:"No file uploaded"
+              success: false,
+              message: "No file uploaded",
             });
           }
-        } catch(e) {
+        } catch (e) {
           console.log(e);
           res.status(500).send(e);
         }
       },
-      require:{
-        chat:{}
-      }
-    }
+      require: {
+        chat: {},
+      },
+    },
+    {
+      path: "/pushworkersubscribe",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        state.db.modifyOneProp(
+          "Users",
+          { uuid: user.uuid },
+          "pushsubscription",
+          () => req.body
+        );
+      },
+      require: {},
+    },
   ],
   listeners: [],
 };

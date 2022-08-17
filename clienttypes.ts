@@ -1,6 +1,8 @@
 // these are clones of the internal schemas for different things, but without sensitive or unneeded information
 // this module cannot import anything since it is required by 2 different esconfigs
 
+export const MESSAGES_PER_PAGE = 20;
+
 export interface ClientRoom {
   uuid: string;
   name: string;
@@ -18,10 +20,10 @@ export interface ClientSelf {
   uuid: string;
   permissions: object;
 }
-export interface ClientUser{
-  name:string;
-  online:boolean;
-  uuid:string;
+export interface ClientUser {
+  name: string;
+  online: boolean;
+  uuid: string;
 }
 
 export interface ClientChatMessage {

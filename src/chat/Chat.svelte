@@ -9,6 +9,7 @@
     ClientRoom,
     ClientSelf,
     ClientUser,
+    MESSAGES_PER_PAGE,
   } from "../../clienttypes";
   import SelectButton from "../components/SelectButton.svelte";
   import ChatMessage from "./ChatMessage.svelte";
@@ -27,13 +28,17 @@
   import { noop, onMount } from "svelte/internal";
   import UserDropdown from "./UserDropdown.svelte";
 
-  let socket:Socket = io();
+  let socket: Socket = io();
   let message = "";
   let selectedroom: SelectedRoom;
-  
-  let rooms: { [name: string]: ClientRoom } = {};
+
+  let rooms: {
+    [name: string]: ClientRoom;
+  } = {};
   let messages: { [name: string]: ClientChatMessage[] } = {};
-  let unread: { [name:string]: number } = {};
+  let roomsdata:{
+    [name:string]: {unread: number,page:number,endreached:boolean};
+  } = {};
 
   let publicrooms: ClientRoom[] = [];
   let self: ClientSelf;
@@ -44,32 +49,37 @@
 
   let newRoomTitle = "";
   let newRoomPublic: boolean = false;
-  let fileinput:HTMLInputElement;
-  let uploadedImage: string | null;
-  let messageFormData: FormData | null;
+  let fileinput: HTMLInputElement;
+  // let uploadedImage: string | null;
+  // let messageFormData: FormData | null;
+  let messageContainer: HTMLElement;
+  let lastmsg: HTMLElement | null;
 
   let prev: ChatMessage | null;
 
-  let focused = true;
-  window.onblur = () => (focused = false);
-  window.onfocus = () => (focused = true);
 
   jq.get("/api/me").then((s) => (self = s));
 
-  $: connected = socket.connected;
+
+  let loading = false;
+  let scrollDetector: HTMLElement | null;
+  $: {
+    if (scrollDetector) {
+      let observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            fetch();
+          }
+        },
+        { threshold: 1 }
+      );
+      observer.observe(scrollDetector);
+    }
+  }
 
   socket.on("chat:newmessage", (res) => {
     messages[res.room].push(res.msg);
     messages = messages; // svelte moment
-    if (document.visibilityState == "hidden"){
-      console.log("sending notification")
-        new Notification(res.msg.sendername,{
-          body:res.msg.message,
-          icon: `/pfp/${res.msg.sendername}.png`
-        }).addEventListener("click",()=>{
-          window.open("/chat");
-        })
-    }
   });
   socket.on("chat:rooms", (res: ClientRoom[]) => {
     console.log("recieved rooms");
@@ -79,13 +89,21 @@
         selectedroom = { kind: "room", id: room.uuid };
       }
       rooms[room.uuid] = room;
+
       if (!messages[room.uuid]) {
         messages[room.uuid] = [];
-        unread[room.uuid] = 0;
-        fetch(room.uuid);
+        roomsdata[room.uuid] ={
+        unread: 0,
+        page: 0,
+        endreached:false,
+        } 
       }
     }
-    if (selectedroom.kind == "room" && !rooms[selectedroom.id]) {
+    if (
+      selectedroom &&
+      selectedroom.kind == "room" &&
+      !rooms[selectedroom.id]
+    ) {
       selectedroom = {
         kind: "tab",
         type: MenuType.Public,
@@ -104,11 +122,33 @@
       message = "";
     }
   }
-  async function fetch(roomid: string) {
-    let resp: ClientChatMessage[] = await jq.post("/api/chat/fetch", {
-      id: roomid,
-    });
-    messages[roomid] = resp;
+  async function fetch() {
+    if (selectedroom.kind == "room") {
+      let room = rooms[selectedroom.id];
+      let data = roomsdata[selectedroom.id];
+      data.page += 1;
+      
+
+      loading = true;
+      let resp: ClientChatMessage[] = await jq.post("/api/chat/fetch", {
+        id: selectedroom.id,
+        page:data.page-1,
+      });
+      setTimeout(()=>{
+        loading = false;
+        if (resp.length > 0){
+          messageContainer.children[MESSAGES_PER_PAGE+1].scrollIntoView();
+        }
+      },200);
+      if(resp.length == 0){
+        data.endreached = true;
+      }else{
+        messages[selectedroom.id] = [...resp, ...messages[selectedroom.id]];
+      }
+      console.log(data.page);
+      rooms = rooms; 
+
+    }
   }
 
   async function selectNewRoom() {
@@ -130,6 +170,7 @@
       public: newRoomPublic,
     });
     rooms[resp.uuid] = resp;
+    roomsdata[resp.uuid] = {unread: 0, page: 0,endreached:false };
     messages[resp.uuid] = [];
     selectedroom = { kind: "room", id: resp.uuid };
   }
@@ -147,13 +188,13 @@
       uuid: user,
     });
   }
-  function attachImage(){
-    fileinput.click();  
+  function attachImage() {
+    fileinput.click();
   }
-  function addImage(this:any,e){
+  function addImage(this: any, e) {
     console.log(e);
     let reader = new FileReader();
-    reader.addEventListener("load",()=>{
+    reader.addEventListener("load", () => {
       // uploadedImage = reader.result;
     });
     reader.readAsDataURL(this.files[0]);
@@ -181,9 +222,15 @@
   <UserDropdown bind:showuserdropdown user={selecteduser} />
 {/if}
 <main class="dark">
-  <input on:change = {addImage} class = "hidden" type = "file" bind:this = {fileinput} accept = "image/jpeg, image/png, image/jpg">
-  <TopBar showtoasts = {false} bind:socket {self} title="CoolChat" />
-  <div id="selector" class="darkm2 p-3 flex flex-col shadow-black shadow-sm">
+  <input
+    on:change={addImage}
+    class="hidden"
+    type="file"
+    bind:this={fileinput}
+    accept="image/jpeg, image/png, image/jpg"
+  />
+  <TopBar showtoasts={false} bind:socket {self} title="CoolChat" />
+  <div id="selector" class="darkm1 p-3 flex flex-col shadow-black shadow-sm">
     {#each Object.values(rooms) as room}
       <SelectButton
         text={room.name}
@@ -194,6 +241,7 @@
   </div>
   {#if selectedroom && selectedroom.kind == "room"}
     {@const room = rooms[selectedroom.id]}
+    {@const roomdata = roomsdata[selectedroom.id]}
     <div class="c-contents" id="contents-room">
       <div class="darkm2 flex justify-between" id="room-bar">
         <div>
@@ -218,7 +266,14 @@
         </div>
       </div>
       <!-- <div id="contents-actions" class="darkm" /> -->
-      <div id="room-body" class="darkm3">
+      <div id="room-body" bind:this = {messageContainer} class="darkm3">
+        {#if roomdata.endreached}
+          <p class = "text-center text text-xl">the start of {room.name}</p>
+        {:else if loading}
+          <p class="text-center text text-xl">Loading...</p>
+        {:else}
+          <div bind:this={scrollDetector} />
+        {/if}
         {#each messages[selectedroom.id] as message, i}
           <ChatMessage
             clickpfp={(e) => activateDropdown(e, message.sender)}
@@ -238,7 +293,7 @@
           placeholder="send a message..."
           on:keydown={(e) => {
             if (e.key == "Enter") {
-              if (!e.shiftKey){
+              if (!e.shiftKey) {
                 sendmessage();
                 e.preventDefault();
                 return false;
@@ -246,8 +301,8 @@
             }
           }}
         />
-        <button class = "m-2" on:click = {attachImage}>
-          <FontAwesomeIcon size = "1.5x" icon = {faCirclePlus} inverse = {true}/>
+        <button class="m-2" on:click={attachImage}>
+          <FontAwesomeIcon size="1.5x" icon={faCirclePlus} inverse={true} />
         </button>
       </div>
       <div id="room-list" class="darkm2">

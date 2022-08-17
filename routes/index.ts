@@ -12,30 +12,33 @@ export function socketConnect(state: App, socket: Socket) {
     cookies,
     {},
     (user: User) => {
-      let cached: [Socket | null,CachedUser] | null = state.usercache.getVal(user.uuid);
+      let cached: [Socket | null, CachedUser] | null = state.usercache.getVal(
+        user.uuid
+      );
       let send = !cached || !cached[1].online;
+      if (!user.pushsubscription) {
+        socket.emit("account:pushworkerresubscribe");
+      }
 
       state.usercache.setVal(user.uuid, socket, {
         username: user.username,
         online: true,
         setOfflineTimer: null,
       });
-      if (send){
-         userStatusUpdate(state,user.uuid);
+      if (send) {
+        userStatusUpdate(state, user.uuid);
       }
 
-
       socket.on("disconnect", () => {
-        let [socket,cacheduser]: [Socket | null, CachedUser] = state.usercache.getVal(
-          user.uuid
-        )!;
-        if  (cacheduser.setOfflineTimer){
+        let [socket, cacheduser]: [Socket | null, CachedUser] =
+          state.usercache.getVal(user.uuid)!;
+        if (cacheduser.setOfflineTimer) {
           clearTimeout(cacheduser.setOfflineTimer);
         }
-        cacheduser.setOfflineTimer = setTimeout(()=>{
+        cacheduser.setOfflineTimer = setTimeout(() => {
           cacheduser.online = false;
-          userStatusUpdate(state,user.uuid);
-        },10000);
+          userStatusUpdate(state, user.uuid);
+        }, 10000);
         cacheduser.online = false;
         state.usercache.setVal(user.uuid, null, cacheduser);
       });
@@ -64,7 +67,7 @@ export default {
     {
       path: "me",
       type: RequestType.GET,
-      require:{},
+      require: {},
       route: (state: App, user: User, req: Request, res: Response) => {
         let clientself: ClientSelf = {
           username: user.username,
@@ -76,19 +79,19 @@ export default {
     },
     {
       path: "user",
-      require:{},
+      require: {},
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
-        res.send(await constructClientUser(state,req.body.uuid));
+        res.send(await constructClientUser(state, req.body.uuid));
       },
     },
   ],
 };
-async function userStatusUpdate(state:App,userid:string){
+async function userStatusUpdate(state: App, userid: string) {
   let rooms = await state.db.getAll<Room>("Rooms");
-  for (let room of rooms){
-    if (room.users.includes(userid)){
-      sendRoom(state,room);
+  for (let room of rooms) {
+    if (room.users.includes(userid)) {
+      sendRoom(state, room);
     }
   }
 }

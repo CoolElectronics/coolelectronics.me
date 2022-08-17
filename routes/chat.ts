@@ -4,8 +4,13 @@ import { Socket } from "socket.io";
 import { App, CachedUser, parse, RequestType } from "../main";
 import xss from "xss";
 import { randomUUID } from "crypto";
-import { ClientRoom, ClientChatMessage, ClientUser } from "../clienttypes";
-
+import {
+  ClientRoom,
+  ClientChatMessage,
+  ClientUser,
+  MESSAGES_PER_PAGE,
+} from "../clienttypes";
+import webpush from "web-push";
 export default {
   path: "chat",
   route: (state: App, user: User, req: Request, res: Response) => {
@@ -54,16 +59,37 @@ export default {
             ) as ClientChatMessage;
             clientmsg.sendername = user.username;
 
-            for (let user of room.users) {
+            for (let userid of room.users) {
               let cached: [Socket | null, CachedUser] | null =
-                state.usercache.getVal(user);
+                state.usercache.getVal(userid);
               if (cached && cached[0]) {
                 cached[0].emit("chat:newmessage", {
                   msg: clientmsg,
                   room: room.uuid,
                 });
               } else {
-                // add it to the notifs or whatever
+                let usrinroom: User = (await state.db.getUser(userid)) as User;
+                if (usrinroom.pushsubscription) {
+                  webpush
+                    .sendNotification(
+                      usrinroom.pushsubscription,
+                      JSON.stringify({
+                        title: user.username,
+                        body: message.message,
+                      })
+                    )
+                    .catch(() => {
+                      console.log("unsubscription or error when pushing");
+                      state.db.modifyOneProp(
+                        "Users",
+                        { uuid: user.uuid },
+                        "pushsubscription",
+                        () => null
+                      );
+                    });
+                } else {
+                  console.log("no worker :sad:");
+                }
               }
             }
           }
@@ -88,25 +114,31 @@ export default {
         if (room) {
           // null check
           if (room.users.includes(user.uuid)) {
-            let clientmessages = await Promise.all(
-              room.messages.map(async (msg) => {
-                let usr = await state.db.getUser(msg.sender);
-                if (usr) {
-                  let newmsg: ClientChatMessage = {
-                    uuid: msg.uuid,
-                    sender: msg.sender,
-                    timestamp: msg.timestamp,
-                    sendername: usr.username,
-                    roomuuid: room!.uuid,
-                    message: msg.message,
+            let start =
+              room.messages.length - req.body.page * MESSAGES_PER_PAGE;
+            if (start < 0) start = 0;
 
-                    sent: true,
-                  };
-                  return newmsg;
-                } else {
-                  console.error("unreachable state or deleted user");
-                }
-              })
+            let clientmessages = await Promise.all(
+              room.messages
+                .slice(start - MESSAGES_PER_PAGE, start)
+                .map(async (msg) => {
+                  let usr = await state.db.getUser(msg.sender);
+                  if (usr) {
+                    let newmsg: ClientChatMessage = {
+                      uuid: msg.uuid,
+                      sender: msg.sender,
+                      timestamp: msg.timestamp,
+                      sendername: usr.username,
+                      roomuuid: room!.uuid,
+                      message: msg.message,
+
+                      sent: true,
+                    };
+                    return newmsg;
+                  } else {
+                    console.error("unreachable state or deleted user");
+                  }
+                })
             );
             res.send(clientmessages);
           }
@@ -341,14 +373,20 @@ export default {
             user.uuid
           );
           room = await state.db.getOne("Rooms", { uuid: req.body.uuid });
-          sendRoom(state, room!);
-          // sendroom won't send it to the removed user because they aren't in the room anymore
-          let cachedremoved: [Socket | null, CachedUser] | null =
-            state.usercache.getVal(user.uuid);
-          if (cachedremoved && cachedremoved[0]) {
-            sendRooms(state, user.uuid, cachedremoved[0]);
+          if (room!.users.length > 0) {
+            sendRoom(state, room!);
+            // sendroom won't send it to the removed user because they aren't in the room anymore
+            let cachedremoved: [Socket | null, CachedUser] | null =
+              state.usercache.getVal(user.uuid);
+            if (cachedremoved && cachedremoved[0]) {
+              sendRooms(state, user.uuid, cachedremoved[0]);
+            }
+            res.sendStatus(200);
+          } else {
+            await state.db.database.collection("Rooms").deleteOne({
+              uuid: req.body.uuid,
+            });
           }
-          res.sendStatus(200);
           return;
         }
         res.sendStatus(400);

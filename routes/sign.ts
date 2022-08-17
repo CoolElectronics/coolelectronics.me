@@ -28,7 +28,10 @@ export default {
       type: RequestType.POST,
       route: async (state: App, req, res) => {
         let username = xss(req.body.username);
-        if (await state.db.database.collection("Users").findOne({username}) != null) {
+        if (
+          (await state.db.database.collection("Users").findOne({ username })) !=
+          null
+        ) {
           res.send({
             success: false,
             reason: "A user with that username already exists",
@@ -41,6 +44,11 @@ export default {
             maxAge: 9999990,
             httpOnly: false,
             sameSite: "strict",
+          });
+          state.usercache.addItem(username, null, {
+            username,
+            online: true,
+            setOfflineTimer: null,
           });
           res.send({
             success: true,

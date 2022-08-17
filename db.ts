@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { ClientUser, ClientUserSettings } from "./clienttypes";
 import { App, CachedUser } from "./main";
 import { Socket } from "socket.io";
+import { PushSubscription } from "web-push";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
@@ -19,6 +20,7 @@ export async function connect(): Promise<Database> {
     "Games",
     "Ftp",
     "FriendRequests",
+    "Misc"
   ]);
   return database;
 }
@@ -46,7 +48,7 @@ export class Database {
     propname: any,
     toappend: any
   ) {
-    let modifier = (prop: any[]) => [...prop,toappend];
+    let modifier = (prop: any[]) => [...prop, toappend];
     await this.modifyOneProp(collection, selector, propname, modifier);
   }
   async removeFromList(
@@ -74,7 +76,7 @@ export class Database {
       setter.$set[propname] = set;
       await this.database.collection(collection).updateOne(selector, setter);
     } else {
-      throw "something was null in " + collection;
+      console.trace("something was null in " + collection);
     }
   }
   async modifyOne(
@@ -220,6 +222,7 @@ export interface User {
   settings: ClientUserSettings;
   files: string[];
   boards: string[];
+  pushsubscription: PushSubscription | null;
 }
 export interface Room {
   uuid: string;
@@ -236,10 +239,10 @@ export interface ChatMessage {
   timestamp: Date;
   //reply?
 }
-export interface FriendRequest{
-  uuid:string,
-  from:string,
-  to:string,
+export interface FriendRequest {
+  uuid: string;
+  from: string;
+  to: string;
 }
 function constructUser(username: string, hash: string): User {
   return {
@@ -255,6 +258,7 @@ function constructUser(username: string, hash: string): User {
     },
     files: [],
     boards: [],
+    pushsubscription: null,
   };
 }
 export async function constructClientUser(

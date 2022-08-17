@@ -16,6 +16,7 @@
   import User from "../components/User.svelte";
   import ChatMessage from "../chat/ChatMessage.svelte";
   import { noop } from "svelte/internal";
+  import { init, resubscribe } from "../pushclient";
 
   export let title;
   export let self: ClientSelf | null = null;
@@ -24,10 +25,19 @@
 
   let focused = true;
 
-  let toasts: ClientChatMessage[] = [];
+  let toasts: Toast[] = [];
 
-  // let notifs:
+  let connected = true;
 
+  let styleinject = `
+  <style>
+    .toast > *{
+      margin:0 !important
+    } 
+  </style>
+  `;
+
+  init();
   if (!self) {
     jq.get("/api/me").then((user) => {
       self = user;
@@ -40,26 +50,27 @@
 
   Notification.requestPermission();
 
-  if (showtoasts) {
-    socket.on("chat:newmessage", (msg) => {
-      let message: ClientChatMessage = msg.msg;
-      if (document.visibilityState == "visible" && focused) {
-        toasts = [...toasts, message];
-        let i = toasts.length - 1;
-        // setTimeout(() => {
-        //   toasts.splice(i, 1);
-        //   toasts = toasts;
-        // }, 10000);
-      } else {
-        new Notification(message.sendername,{
-          body: message.message,
-          icon: `/pfp/${message.sendername}.png`
-        }).addEventListener("click",()=>{
-          window.open("/chat");
-        })
-      }
-    });
-  }
+  socket.on("chat:newmessage", (msg) => {
+    let message: ClientChatMessage = msg.msg;
+    if (showtoasts && document.visibilityState == "visible" && focused) {
+      toasts = [{ kind: "chatmessage", message },...toasts];
+      let i = toasts.length - 1;
+      // setTimeout(() => {
+      //   toasts.splice(i, 1);
+      //   toasts = toasts;
+      // }, 10000);
+    } else if (document.visibilityState == "hidden" && !focused) {
+      new Notification(message.sendername, {
+        body: message.message,
+        icon: `/pfp/${message.sendername}.png`,
+      }).addEventListener("click", () => {
+        window.open("/chat");
+      });
+    }
+  });
+  socket.on("account:pushworkerresubscribe", (msg) => {
+    resubscribe();
+  });
 
   function signOut() {
     document.cookie = "token=;Max-Age=-999999999";
@@ -67,6 +78,24 @@
   }
   async function showNotifs() {
     // notifs = fetch()
+  }
+
+  setInterval(() => {
+    if (connected != socket.connected) {
+      toasts = [{kind:"serverstatus",status:socket.connected},...toasts];
+    }
+    console.log(socket.connected);
+    connected = socket.connected;
+  }, 3000);
+
+  type Toast = ChatMessageToast | ServerStatusToast;
+  interface ServerStatusToast {
+    kind: "serverstatus";
+    status: boolean;
+  }
+  interface ChatMessageToast {
+    kind: "chatmessage";
+    message: ClientChatMessage;
   }
 </script>
 
@@ -100,20 +129,19 @@
           toasts = toasts;
         }}
       >
-        <ChatMessage {self} message={toast} prev={null} clickpfp={noop} />
+        <p class = "hidden text-green-300 text-red-300"/>
+        {#if toast.kind == "chatmessage"}
+          <ChatMessage {self} message={toast.message} prev={null} clickpfp={noop} />
+        {:else if toast.kind == "serverstatus"}
+          <p class = {"text-md " + (toast.status ? "text-green-300" : "text-red-300")}>{toast.status ? "Connected to server" : "Disconnected from server"}</p>
+        {/if}
       </div>
     {/each}
   {/if}
 </div>
-{@html `
-<style>
-  .toast > *{
-    margin: 0 !important
-  }
-</style>
-`}
+{@html styleinject}
 
-<!--hahhaha don't ask-->
+<!--hahhaha don't ask besides its temporary:tm:-->
 <style>
   #root {
     grid-area: topbar;
@@ -129,10 +157,13 @@
     flex-direction: column;
     align-items: flex-end;
     padding-top: 8px;
+    pointer-events: none;
   }
   .toast {
+    pointer-events: initial;
     width: 20%;
     border: 4px solid var(--darkp1);
     padding: 10px;
+    z-index: 999;
   }
 </style>
