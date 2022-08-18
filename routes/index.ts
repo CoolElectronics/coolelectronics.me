@@ -1,10 +1,10 @@
 import express, { Request, Response } from "express";
 import { Socket } from "socket.io";
 import { noop } from "svelte/internal";
-import { App, CachedUser, parse, RequestType } from "../main";
+import { App, CachedUser, parse } from "../main";
 import { constructClientUser, Room, User } from "../db";
-import { ClientSelf } from "../clienttypes";
-import { sendRoom } from "./chat";
+import { ClientSelf, RequestType } from "../clienttypes";
+import { sendRoom } from "./chat/chat";
 
 export function socketConnect(state: App, socket: Socket) {
   let cookies = parse(socket.request.headers.cookie);

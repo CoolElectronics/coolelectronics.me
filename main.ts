@@ -1,11 +1,14 @@
 import express, { Application, IRoute, Request, Response } from "express";
+import { API, RequestType } from "./clienttypes";
 
 import indexRoute, { socketConnect } from "./routes/index";
 import signRoute from "./routes/sign";
 import homeRoute from "./routes/home";
-import chatRoute from "./routes/chat";
+import chatRoute from "./routes/chat/chat";
 import accountRoute from "./routes/account";
 import adminRoute from "./routes/admin";
+import gamesRoute from "./routes/games/games";
+import ftpRoute from "./routes/ftp";
 import { connect, Database, User } from "./db";
 
 import cors from "cors";
@@ -22,6 +25,7 @@ import http from "http";
 import { listeners } from "process";
 import fileUpload from "express-fileupload";
 import webpush from "web-push";
+import { TypeOfTag } from "typescript";
 
 const port = 8080;
 
@@ -74,6 +78,8 @@ global.rootDir = path.resolve(__dirname);
     chatRoute,
     accountRoute,
     adminRoute,
+    gamesRoute,
+    ftpRoute,
   ];
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
@@ -114,21 +120,48 @@ global.rootDir = path.resolve(__dirname);
       }
     });
     route.api.forEach((endpoint) => {
-      let path = "/api" + "/" + route.path + endpoint.path;
+      let path =
+        "/api" +
+        "/" +
+        route.path +
+        (endpoint.api ? endpoint.api.path : endpoint.path);
       console.log(path);
-      let routefn = function (req, res, next) {
+      let routefn = async function (req, res, next) {
         if (endpoint.require) {
           state.db.Validate(
             req.cookies,
             endpoint.require,
-            (user) => endpoint.route(state, user, req, res, next),
+            async (user) => {
+              if (endpoint.api) {
+                let body: object | null = parseBody(
+                  req.body,
+                  endpoint.api.request
+                );
+                if (body) {
+                  res.send(
+                    await endpoint.route(state, user, body, req, res, next)
+                  );
+                } else {
+                  res.send({ error: "invalid schema" });
+                  console.log(
+                    "bad schema. wanted " +
+                      endpoint.api.request +
+                      " got " +
+                      req.body
+                  );
+                }
+              } else {
+                endpoint.route(state, user, req, res, next);
+              }
+            },
             () => res.send(401)
           );
         } else {
           endpoint.route(state, req, res, next);
         }
       };
-      switch (endpoint.type) {
+      let type = endpoint.api ? endpoint.api.type : endpoint.type;
+      switch (type) {
         case RequestType.GET:
           app.get(path, routefn);
           break;
@@ -163,6 +196,19 @@ global.rootDir = path.resolve(__dirname);
   );
 })();
 
+function parseBody(body: object, schema: object): object | null {
+  let parsedbody = {};
+  for (let k of Object.keys(schema)) {
+    let v = schema[k];
+    if (typeof body[k] == typeof v) {
+      parsedbody[k] = body[k];
+    } else {
+      return null;
+    }
+  }
+  return parsedbody;
+}
+
 interface Route {
   path: string;
   route: any;
@@ -177,10 +223,11 @@ export interface SocketEndpoint {
   require: object;
 }
 export interface ApiEndpoint {
-  path: string;
-  type: RequestType;
+  path?: string;
+  type?: RequestType;
   route: any;
   require?: object | null;
+  api?: API;
 }
 export interface App {
   db: Database;
@@ -191,11 +238,6 @@ export interface CachedUser {
   online: boolean;
   username: string;
   setOfflineTimer: ReturnType<typeof setTimeout> | null;
-}
-export const enum RequestType {
-  GET,
-  POST,
-  // really thats all i should need for now
 }
 // not sure why this isn't a thing in base js, but whatever it works
 class AppCache<K, V, C> {

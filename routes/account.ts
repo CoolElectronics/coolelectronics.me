@@ -1,6 +1,6 @@
-import { App, RequestType } from "../main";
+import { App } from "../main";
 import { constructClientUser, FriendRequest, User } from "../db";
-import { ClientFriendRequest, ClientUser } from "../clienttypes";
+import { ClientFriendRequest, ClientUser, RequestType } from "../clienttypes";
 import { Request, Response } from "express";
 import { randomUUID } from "crypto";
 import Busboy from "busboy";

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import jq from "jquery";
   import TopBar from "../components/TopBar.svelte";
   import User from "../components/User.svelte";
   import RoomSettings from "./RoomSettings.svelte";
@@ -27,6 +26,8 @@
   import { FontAwesomeIcon } from "fontawesome-svelte";
   import { noop, onMount } from "svelte/internal";
   import UserDropdown from "./UserDropdown.svelte";
+  import request from "../requests";
+import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJoinPublic, ChatJoinPublicRequest, ChatJoinPublicResponse, ChatLeaveRoom, ChatLeaveRoomRequest, ChatNewRoom, ChatNewRoomRequest, ChatNewRoomResponse } from "../../routes/chat/types";
 
   let socket: Socket = io();
   let message = "";
@@ -130,7 +131,7 @@
       
 
       loading = true;
-      let resp: ClientChatMessage[] = await jq.post("/api/chat/fetch", {
+      let resp: ClientChatMessage[] = await request<ChatFetchRequest,ChatFetchResponse>(ChatFetch, {
         id: selectedroom.id,
         page:data.page-1,
       });
@@ -157,15 +158,15 @@
 
   async function selectPublic() {
     selectedroom = { kind: "tab", type: MenuType.Public };
-    publicrooms = await jq.get("/api/chat/fetchpublic");
+    publicrooms = await request(ChatFetchPublic);
   }
   async function joinPublicRoom(uuid: string) {
-    await jq.post("/api/chat/joinpublic", {
+    await request<ChatJoinPublicRequest,ChatJoinPublicResponse>(ChatJoinPublic,{
       uuid,
     });
   }
   async function createNewRoom() {
-    let resp: ClientRoom = await jq.post("/api/chat/newroom", {
+    let resp = await request<ChatNewRoomRequest,ChatNewRoomResponse>(ChatNewRoom,{
       name: newRoomTitle,
       public: newRoomPublic,
     });
@@ -176,8 +177,8 @@
   }
   async function leaveRoom() {
     if (selectedroom.kind == "room") {
-      let resp = await jq.post("/api/chat/leaveroom", {
-        uuid: selectedroom.id,
+      let resp = await request<ChatLeaveRoomRequest>(ChatLeaveRoom,{
+        room: selectedroom.id,
       });
       selectedroom = null as unknown as SelectedRoom; // yeah yeah whatever idc
     }

@@ -45,3 +45,34 @@ export interface ClientUserSettings {
   pushNotifs: boolean;
 }
 export interface ClientSettings {}
+export interface ClientGame {
+  title: string;
+  addedby: string;
+  rating: number;
+  credits: string;
+  link: string;
+  uuid: string;
+  description: string;
+}
+export interface ClientGameCollection {
+  creator: string;
+  games: ClientGame[];
+  uuid: string;
+  name: string;
+  description: string;
+}
+
+export const enum RequestType {
+  GET,
+  POST,
+  // really thats all i should need for now
+}
+export interface API {
+  path: string;
+  route: string;
+  type: RequestType;
+  request: object;
+}
+export interface Error {
+  error: string;
+}

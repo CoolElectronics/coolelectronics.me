@@ -1,9 +1,17 @@
 <script lang="ts">
-  import jq from "jquery";
+  import call  from "../requests"
   import TopBar from "../components/TopBar.svelte";
+  import { NewCollection, NewCollectionRequest, NewCollectionResponse } from "../../routes/games/schema";
   
   // let games:
   // let game:string 
+  (async ()=>{
+    let a = await call<any,NewCollectionResponse>(NewCollection,{
+      name: "cool collection",
+      a:"d"
+    });
+    console.log(a);
+  })();
 </script>
 
 <main class = "dark">

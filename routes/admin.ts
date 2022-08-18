@@ -1,8 +1,9 @@
-import { App, RequestType } from "../main";
+import { App } from "../main";
 import { User } from "../db";
 import { Request, Response } from "express";
 import * as proc from "child_process";
 import axios from "axios";
+import { RequestType } from "../clienttypes";
 
 export default {
   path: "admin",

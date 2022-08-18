@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
-import { RequestType, App } from "../main";
+import { App } from "../main";
+import { RequestType } from "../clienttypes";
 import xss from "xss";
 
 const saltRounds = 11;

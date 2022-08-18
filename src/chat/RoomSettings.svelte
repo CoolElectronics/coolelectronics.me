@@ -1,13 +1,24 @@
 <script lang="ts">
   import { ClientRoom, ClientUser } from "../../clienttypes";
   import ClickOutside from "svelte-click-outside";
-  import jq from "jquery";
   import SelectButton from "../components/SelectButton.svelte";
   import Pfp from "../components/Pfp.svelte";
 
   import { FontAwesomeIcon } from "fontawesome-svelte";
   import { faUserPlus, faUserXmark } from "@fortawesome/free-solid-svg-icons";
   import User from "../components/User.svelte";
+  import request from "../requests";
+import { ChatInvitableUsersRequest ,
+ ChatInvitableUsersResponse ,
+ChatInvitableUsers, 
+ChatChangeRoomSettingsRequest,
+ChatChangeRoomSettings,
+ChatRemoveUserRequest,
+ChatRemoveUser,
+ChatInviteUserRequest,
+ChatInviteUser,
+ChatDeleteRoomRequest,
+ChatDeleteRoom} from "../../routes/chat/types";
 
   export let showroomsettings: boolean;
   export let room: ClientRoom;
@@ -31,8 +42,8 @@
   async function updateroom() {
     console.log("room changed");
 
-    invitablefriends = await jq.post("/api/chat/invitablefriends", {
-      uuid: room.uuid,
+    invitablefriends = await request<ChatInvitableUsersRequest,ChatInvitableUsersResponse>(ChatInvitableUsers,{
+      room: room.uuid,
     });
 
     roomsettings = {
@@ -52,8 +63,8 @@
     showroomsettings = false;
     justactivated = true;
     if (initialsettings != roomsettings) {
-      await jq.post("/api/chat/changeroomsettings", {
-        uuid: room.uuid,
+      await request<ChatChangeRoomSettingsRequest>(ChatChangeRoomSettings,{
+        room: room.uuid,
         name: roomsettings.name,
         public: roomsettings.public,
       });
@@ -65,8 +76,8 @@
     roomsettings = roomsettings;
     justactivated = true;
 
-    await jq.post("/api/chat/removeuser", {
-      uuid: room.uuid,
+    await request<ChatRemoveUserRequest>(ChatRemoveUser,{
+      room: room.uuid,
       user: user.uuid,
     });
     justactivated = true;
@@ -76,15 +87,15 @@
     roomsettings = roomsettings;
     justactivated = true;
 
-    await jq.post("/api/chat/inviteuser", {
-      uuid: room.uuid,
-      invited: friend.uuid,
+    await request<ChatInviteUserRequest>(ChatInviteUser,{
+      room: room.uuid,
+      user: friend.uuid,
     });
   }
   async function deleteRoom() {
     if (confirm("are you sure you want to delete this room")) {
-      await jq.post("/api/chat/deleteroom", {
-        uuid: room.uuid,
+      await request<ChatDeleteRoomRequest>(ChatDeleteRoom,{
+        room: room.uuid,
       });
     }
   }

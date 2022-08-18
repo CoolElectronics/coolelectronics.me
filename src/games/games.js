@@ -1,5 +1,5 @@
 import "../app.css";
-import Home from "./Games.svelte";
+import Games from "./Games.svelte";
 
 const app = new Games({
   target: document.getElementById("app"),
