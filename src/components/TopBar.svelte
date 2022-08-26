@@ -1,10 +1,11 @@
 <script lang="ts">
-  import jq from "jquery";
   import Pfp from "./Pfp.svelte";
   import { library } from "@fortawesome/fontawesome-svg-core";
   import {
     faRightFromBracket,
     faHouseUser,
+faSignOut,
+faSignIn,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     FontAwesomeIcon,
@@ -17,6 +18,9 @@
   import ChatMessage from "../chat/ChatMessage.svelte";
   import { noop } from "svelte/internal";
   import { init, resubscribe } from "../pushclient";
+
+  import request from "../requests";
+  import { SelfResponse, Self } from "../../routes/index/types";
 
   export let title;
   export let self: ClientSelf | null = null;
@@ -33,13 +37,13 @@
   <style>
     .toast > *{
       margin:0 !important
-    } 
+    }
   </style>
   `;
 
   init();
   if (!self) {
-    jq.get("/api/me").then((user) => {
+    request<SelfResponse>(Self).then((user) => {
       self = user;
     });
   }
@@ -53,7 +57,7 @@
   socket.on("chat:newmessage", (msg) => {
     let message: ClientChatMessage = msg.msg;
     if (showtoasts && document.visibilityState == "visible" && focused) {
-      toasts = [{ kind: "chatmessage", message },...toasts];
+      toasts = [{ kind: "chatmessage", message }, ...toasts];
       let i = toasts.length - 1;
       // setTimeout(() => {
       //   toasts.splice(i, 1);
@@ -82,9 +86,8 @@
 
   setInterval(() => {
     if (connected != socket.connected) {
-      toasts = [{kind:"serverstatus",status:socket.connected},...toasts];
+      toasts = [{ kind: "serverstatus", status: socket.connected }, ...toasts];
     }
-    console.log(socket.connected);
     connected = socket.connected;
   }, 3000);
 
@@ -101,22 +104,25 @@
 
 <div id="root" class="flex items-center justify-between darkm1 text-center">
   <div>
-    <p class="text text-3xl">{title}</p>
+    <p class="text text-3xl m-4">{title}</p>
   </div>
   <div class="flex items-center">
+      {#if self}
     <a href="/home" class="m-2">
       <FontAwesomeIcon size="lg" icon={faHouseUser} inverse={true} />
     </a>
     <button on:click={showNotifs} />
     <a href="/account" class="m-2">
-      {#if self}
-        <!-- TOTALLY USELESS IF STATEMENT BECAUSE SVELTE DOES NOT KNOW WHAT A ! IS -->
         <Pfp size="large" name={self.username} />
-      {/if}
     </a>
     <button on:click={signOut} class="m-2">
       <FontAwesomeIcon size="lg" icon={faRightFromBracket} inverse={true} />
     </button>
+    {:else}
+      <a href = "/sign">
+      <FontAwesomeIcon size="lg" icon={faSignIn} inverse={true}/>
+      </a>
+    {/if}
   </div>
 </div>
 <div id="toasts">
@@ -129,11 +135,21 @@
           toasts = toasts;
         }}
       >
-        <p class = "hidden text-green-300 text-red-300"/>
+        <p class="hidden text-green-300 text-red-300" />
         {#if toast.kind == "chatmessage"}
-          <ChatMessage {self} message={toast.message} prev={null} clickpfp={noop} />
+          <ChatMessage
+            {self}
+            message={toast.message}
+            prev={null}
+            clickpfp={noop}
+          />
         {:else if toast.kind == "serverstatus"}
-          <p class = {"text-md " + (toast.status ? "text-green-300" : "text-red-300")}>{toast.status ? "Connected to server" : "Disconnected from server"}</p>
+          <p
+            class={"text-md " +
+              (toast.status ? "text-green-300" : "text-red-300")}
+          >
+            {toast.status ? "Connected to server" : "Disconnected from server"}
+          </p>
         {/if}
       </div>
     {/each}

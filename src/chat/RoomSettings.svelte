@@ -8,17 +8,7 @@
   import { faUserPlus, faUserXmark } from "@fortawesome/free-solid-svg-icons";
   import User from "../components/User.svelte";
   import request from "../requests";
-import { ChatInvitableUsersRequest ,
- ChatInvitableUsersResponse ,
-ChatInvitableUsers, 
-ChatChangeRoomSettingsRequest,
-ChatChangeRoomSettings,
-ChatRemoveUserRequest,
-ChatRemoveUser,
-ChatInviteUserRequest,
-ChatInviteUser,
-ChatDeleteRoomRequest,
-ChatDeleteRoom} from "../../routes/chat/types";
+  import * as Chat from "../../routes/chat/types";
 
   export let showroomsettings: boolean;
   export let room: ClientRoom;
@@ -40,9 +30,10 @@ ChatDeleteRoom} from "../../routes/chat/types";
   $: room && updateroom();
   // something about this syntax is deeply disturbing to me
   async function updateroom() {
-    console.log("room changed");
-
-    invitablefriends = await request<ChatInvitableUsersRequest,ChatInvitableUsersResponse>(ChatInvitableUsers,{
+    invitablefriends = await request<
+      Chat.InvitableUsersRequest,
+      Chat.InvitableUsersResponse
+    >(Chat.InvitableUsers, {
       room: room.uuid,
     });
 
@@ -63,7 +54,7 @@ ChatDeleteRoom} from "../../routes/chat/types";
     showroomsettings = false;
     justactivated = true;
     if (initialsettings != roomsettings) {
-      await request<ChatChangeRoomSettingsRequest>(ChatChangeRoomSettings,{
+      await request<Chat.ChangeRoomSettingsRequest>(Chat.ChangeRoomSettings, {
         room: room.uuid,
         name: roomsettings.name,
         public: roomsettings.public,
@@ -76,7 +67,7 @@ ChatDeleteRoom} from "../../routes/chat/types";
     roomsettings = roomsettings;
     justactivated = true;
 
-    await request<ChatRemoveUserRequest>(ChatRemoveUser,{
+    await request<Chat.RemoveUserRequest>(Chat.RemoveUser, {
       room: room.uuid,
       user: user.uuid,
     });
@@ -87,14 +78,14 @@ ChatDeleteRoom} from "../../routes/chat/types";
     roomsettings = roomsettings;
     justactivated = true;
 
-    await request<ChatInviteUserRequest>(ChatInviteUser,{
+    await request<Chat.InviteUserRequest>(Chat.InviteUser, {
       room: room.uuid,
       user: friend.uuid,
     });
   }
   async function deleteRoom() {
     if (confirm("are you sure you want to delete this room")) {
-      await request<ChatDeleteRoomRequest>(ChatDeleteRoom,{
+      await request<Chat.DeleteRoomRequest>(Chat.DeleteRoom, {
         room: room.uuid,
       });
     }

@@ -2,7 +2,6 @@
   import { ClientUser } from "../../clienttypes";
   import User from "../components/User.svelte";
   import ClickOutside from "svelte-click-outside";
-  import jq from "jquery";
 
   export let showuserdropdown: boolean;
   export let user: ClientUser;

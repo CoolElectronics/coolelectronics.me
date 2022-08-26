@@ -5,13 +5,17 @@
   import TabButton from "../components/TabButton.svelte";
   import User from "../components/User.svelte";
   import Pfp from "../components/Pfp.svelte";
+  import jq from "jquery";
 
   import { FontAwesomeIcon } from "fontawesome-svelte";
 
-  import jq from "jquery";
   import { faCheck, faUserPlus, faUserXmark, faXmark } from "@fortawesome/free-solid-svg-icons";
   import { onMount } from "svelte/internal";
-import SelectButton from "../components/SelectButton.svelte";
+  import SelectButton from "../components/SelectButton.svelte";
+  
+  import request from "../requests";
+  import { Self, SelfResponse } from "../../routes/index/types";
+  import * as Account from "../../routes/account/types";
 
   let selectedtab: "friends" | "settings" | "account" = "friends";
 
@@ -24,15 +28,13 @@ import SelectButton from "../components/SelectButton.svelte";
 
   onMount(async () => {
     fetchfriends();
-    self = await jq.get("/api/me");
+    self = await request<SelfResponse>(Self);
   });
 
   async function fetchfriends() {
-    friends = await jq.get("/api/account/myfriends");
-    availablefriends = await jq.get("/api/account/availablefriends");
-    let reqs: ClientFriendRequest[] = await jq.get(
-      "/api/account/friendrequests"
-    );
+    friends = await request<any,Account.MyFriendsResponse>(Account.MyFriends);
+    availablefriends = await request<any,Account.AvailableFriendsResponse>(Account.AvaliableFriends);
+    let reqs: ClientFriendRequest[] = await request<any,Account.GetFriendRequestsResponse>(Account.GetFriendRequests); 
     console.log(reqs);
     for (let req of reqs) {
       if (req.from.uuid == self.uuid) {
@@ -46,9 +48,12 @@ import SelectButton from "../components/SelectButton.svelte";
   }
 
   async function requestFriend(friend: ClientUser) {
-    await jq.post("/api/account/requestfriend", {
+    let res = await request<Account.RequestFriendRequest,Account.RequestFriendResponse>(Account.RequestFriend,{
       uuid: friend.uuid,
     });
+    if (res?.failure != null){
+      console.log("failure")
+    }else{
     availablefriends = availablefriends.filter(f => f.uuid != friend.uuid);
     outboundrequests = [...outboundrequests,{
       uuid: "idk",
@@ -59,17 +64,18 @@ import SelectButton from "../components/SelectButton.svelte";
       },
       to:friend,
     }];
-
+    }
+    
   }
   async function removeFriend(friend: ClientUser) {
-    await jq.post("/api/account/removefriend", {
+    await request<any,Account.RemoveFriendRequest>(Account.RemoveFriend,{
       uuid: friend.uuid,
     });
     friends = friends.filter(f => f.uuid != friend.uuid);
   }
   async function requestRespond(uuid:string,response:boolean){
     inboundrequests = inboundrequests.filter(r => r.uuid != uuid);
-    await jq.post("/api/account/requestrespond",{
+    await request<Account.FriendRequestRespondRequest>(Account.FriendRequestRespond,{
       uuid,
       accept:response,
     })
@@ -99,8 +105,10 @@ import SelectButton from "../components/SelectButton.svelte";
     let username = prompt("enter username.");
   }
   async function deleteAccount(){
-    if (prompt("are you sure you want to delete your account?")){
-      if (prompt("note: this may break things on the coolelectronics.me website")){
+    alert("currently not supported")
+    return;
+    if (confirm("are you sure you want to delete your account?")){
+      if (confirm("note: this may break things on the coolelectronics.me website")){
 
       }
     }

@@ -24,10 +24,17 @@
     faUsersRays,
   } from "@fortawesome/free-solid-svg-icons";
   import { FontAwesomeIcon } from "fontawesome-svelte";
-  import { noop, onMount } from "svelte/internal";
+  import { afterUpdate, noop, onMount, tick } from "svelte/internal";
   import UserDropdown from "./UserDropdown.svelte";
   import request from "../requests";
-import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJoinPublic, ChatJoinPublicRequest, ChatJoinPublicResponse, ChatLeaveRoom, ChatLeaveRoomRequest, ChatNewRoom, ChatNewRoomRequest, ChatNewRoomResponse } from "../../routes/chat/types";
+  import * as Chat from "../../routes/chat/types";
+  import call from "../requests";
+  import {
+    GetUser,
+    GetUserRequest,
+    GetUserResponse,
+    Self,
+  } from "../../routes/index/types";
 
   let socket: Socket = io();
   let message = "";
@@ -37,8 +44,8 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
     [name: string]: ClientRoom;
   } = {};
   let messages: { [name: string]: ClientChatMessage[] } = {};
-  let roomsdata:{
-    [name:string]: {unread: number,page:number,endreached:boolean};
+  let roomsdata: {
+    [name: string]: { unread: number; page: number; endreached: boolean };
   } = {};
 
   let publicrooms: ClientRoom[] = [];
@@ -58,9 +65,7 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
 
   let prev: ChatMessage | null;
 
-
-  jq.get("/api/me").then((s) => (self = s));
-
+  call(Self).then((s) => (self = s));
 
   let loading = false;
   let scrollDetector: HTMLElement | null;
@@ -93,11 +98,11 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
 
       if (!messages[room.uuid]) {
         messages[room.uuid] = [];
-        roomsdata[room.uuid] ={
-        unread: 0,
-        page: 0,
-        endreached:false,
-        } 
+        roomsdata[room.uuid] = {
+          unread: 0,
+          page: 0,
+          endreached: false,
+        };
       }
     }
     if (
@@ -128,27 +133,32 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
       let room = rooms[selectedroom.id];
       let data = roomsdata[selectedroom.id];
       data.page += 1;
-      
 
       loading = true;
-      let resp: ClientChatMessage[] = await request<ChatFetchRequest,ChatFetchResponse>(ChatFetch, {
+      let resp: ClientChatMessage[] = await request<
+        Chat.FetchRequest,
+        Chat.FetchResponse
+      >(Chat.Fetch, {
         id: selectedroom.id,
-        page:data.page-1,
+        page: data.page - 1,
       });
-      setTimeout(()=>{
+      setTimeout(() => {
         loading = false;
-        if (resp.length > 0){
-          messageContainer.children[MESSAGES_PER_PAGE+1].scrollIntoView();
-        }
-      },200);
-      if(resp.length == 0){
+      }, 200);
+
+      if (resp.length == 0) {
         data.endreached = true;
-      }else{
+      } else {
         messages[selectedroom.id] = [...resp, ...messages[selectedroom.id]];
       }
-      console.log(data.page);
-      rooms = rooms; 
-
+      rooms = rooms;
+      await tick();
+      if (resp.length > 0) {
+        let elm = messageContainer.children[MESSAGES_PER_PAGE + 1];
+        if (elm) {
+          elm.scrollIntoView();
+        }
+      }
     }
   }
 
@@ -158,26 +168,32 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
 
   async function selectPublic() {
     selectedroom = { kind: "tab", type: MenuType.Public };
-    publicrooms = await request(ChatFetchPublic);
+    publicrooms = await request(Chat.FetchPublic);
   }
   async function joinPublicRoom(uuid: string) {
-    await request<ChatJoinPublicRequest,ChatJoinPublicResponse>(ChatJoinPublic,{
-      uuid,
-    });
+    await request<Chat.JoinPublicRequest, Chat.JoinPublicResponse>(
+      Chat.JoinPublic,
+      {
+        uuid,
+      }
+    );
   }
   async function createNewRoom() {
-    let resp = await request<ChatNewRoomRequest,ChatNewRoomResponse>(ChatNewRoom,{
-      name: newRoomTitle,
-      public: newRoomPublic,
-    });
+    let resp = await request<Chat.NewRoomRequest, Chat.NewRoomResponse>(
+      Chat.NewRoom,
+      {
+        name: newRoomTitle,
+        public: newRoomPublic,
+      }
+    );
     rooms[resp.uuid] = resp;
-    roomsdata[resp.uuid] = {unread: 0, page: 0,endreached:false };
+    roomsdata[resp.uuid] = { unread: 0, page: 0, endreached: false };
     messages[resp.uuid] = [];
     selectedroom = { kind: "room", id: resp.uuid };
   }
   async function leaveRoom() {
     if (selectedroom.kind == "room") {
-      let resp = await request<ChatLeaveRoomRequest>(ChatLeaveRoom,{
+      let resp = await request<Chat.LeaveRoomRequest>(Chat.LeaveRoom, {
         room: selectedroom.id,
       });
       selectedroom = null as unknown as SelectedRoom; // yeah yeah whatever idc
@@ -185,7 +201,7 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
   }
   async function activateDropdown(e: MouseEvent, user: string) {
     showuserdropdown = true;
-    selecteduser = await jq.post("/api/user", {
+    selecteduser = await request<GetUserRequest, GetUserResponse>(GetUser, {
       uuid: user,
     });
   }
@@ -267,9 +283,9 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
         </div>
       </div>
       <!-- <div id="contents-actions" class="darkm" /> -->
-      <div id="room-body" bind:this = {messageContainer} class="darkm3">
+      <div id="room-body" bind:this={messageContainer} class="darkm3">
         {#if roomdata.endreached}
-          <p class = "text-center text text-xl">the start of {room.name}</p>
+          <p class="text-center text text-xl">the start of {room.name}</p>
         {:else if loading}
           <p class="text-center text text-xl">Loading...</p>
         {:else}
@@ -404,7 +420,6 @@ import { ChatFetch, ChatFetchPublic, ChatFetchRequest, ChatFetchResponse, ChatJo
     grid-area: body;
     overflow-y: scroll;
     overflow-x: hidden;
-    position: relative;
     height: 100%;
     padding-bottom: 20px;
   }

@@ -45,27 +45,27 @@
   }
 </script>
 
-<main>
+<main class = "dark">
   <!-- <div class = "appcontainer"> /</div> -->
-  <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col">
+  <div class="darkm1 shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col">
     <div class="mb-4">
-      <label class="block text-gray-500 text-sm font-bold mb-2" for="username">
+      <label class="block text text-sm font-bold mb-2" for="username">
         Username
       </label>
       <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-500"
+        class="darkm2 shadow appearance-none text rounded w-full py-2 px-3"
         bind:value={username}
         type="text"
         placeholder="Username"
       />
     </div>
     <div class="mb-1">
-      <label class="block text-gray-500 text-sm font-bold mb-2" for="password">
+      <label class="block text text-sm font-bold mb-2" for="password">
         Password
       </label>
       <input
-        class="shadow appearance-none border {password == ''
-          ? 'border-red-500'
+        class="darkm2 shadow appearance-none text {password == ''
+          ? 'border border-red-500'
           : ''} rounded w-full py-2 px-3 text-grey-500 mb-3"
         bind:value={password}
         type="password"
@@ -82,8 +82,8 @@
           Confirm Password
         </label>
         <input
-          class="shadow appearance-none border {confirmpassword == ''
-            ? 'border-red-500'
+          class="darkm2 shadow appearance-none text {confirmpassword == ''
+            ? 'border border-red-500'
             : ''} rounded w-full py-2 px-3 text-grey-500 mb-3"
           bind:value={confirmpassword}
           type="password"
@@ -93,19 +93,19 @@
     {/if}
     {#if error != null}
       <div class="pb-1 mb-4 shadow border border-red-500 rounded flex justify-center text-center items-center">
-        <p class="text-center flex justify-center items-center text-red-500 text-xs italic">{error}</p>
+        <p class="m-2 text-center flex justify-center items-center text-red-500 text-xs italic">{error}</p>
       </div>
     {/if}
     <div class="flex items-center justify-between">
       <button
-        class="bg-blue-500 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded"
-        on:click={submit}>Sign In</button
+        class = "darkp2 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded"
+        on:click={submit}>{signUp ? "Sign Up" : "Sign In"}</button
       >
       <p
-        class="text-blue-500 hover:text-blue-400 underline"
+        class="text hover:text-blue-400 underline"
         on:click={() => (signUp = !signUp)}
       >
-        {signUp ? "create account" : "use existing account"}
+        {!signUp ? "create account" : "use existing account"}
       </p>
     </div>
   </div>

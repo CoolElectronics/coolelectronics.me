@@ -1,0 +1,1 @@
+/home/ce/Documents/GitHub/svelte-test/src/playground/rust/target/wasm32-unknown-unknown/release/zsp_playground.wasm: /home/ce/Documents/GitHub/svelte-test/src/playground/rust/outbinds.js /home/ce/Documents/GitHub/svelte-test/src/playground/rust/src/lib.rs

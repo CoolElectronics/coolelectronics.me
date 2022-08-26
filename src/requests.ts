@@ -14,6 +14,8 @@ export default async function call<Req, Res = any>(
 
   if (resp.error) {
     console.error(resp.error);
+    console.error("server trace: " + resp.trace);
+    throw new Error();
   }
   // failure as an alternative
   return resp;
