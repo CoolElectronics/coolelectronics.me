@@ -18,29 +18,83 @@ export const NewCollection = {
     description: "",
   },
 };
+export interface EditCollectionRequest {
+  name: string;
+  description: string;
+  uuid:string;
+}
+export type EditCollectionResponse = null;
+export const EditCollection = {
+  type: RequestType.POST,
+  path: "/editcollection",
+  route: "games",
+  request: {
+    name: "",
+    description: "",
+    uuid:"",
+  },
+};
 
-export interface CollectionAddRequest {
-  title: string;
+export interface AddGameRequest {
+  name: string;
   description: string;
   credits: string;
   collection: string;
-  rating: number;
   link: string;
 }
-export type CollectionAddResponse = ClientGame;
-export const CollectionAdd = {
+export type AddGameResponse = ClientGame;
+export const AddGame = {
   type: RequestType.POST,
-  path: "/collectionadd",
+  path: "/gameadd",
   route: "games",
   request: {
-    title: "",
+    name: "",
     description: "",
     credits: "",
     collection: "",
-    rating: 1,
     link: "",
   },
 };
+
+export interface DeleteGameRequest {
+  collection:string;
+  uuid:string;
+}
+export type DeleteGameResponse = null;
+export const DeleteGame = {
+  type:RequestType.POST,
+  path: "/gamedelete",
+  route: "games",
+  request: {
+    collection: "",
+    uuid:"",
+  }
+}
+
+export interface EditGameRequest{
+  name:string;
+  description:string;
+  credits: string;
+  link:string;
+
+  collection:string;
+  uuid:string;
+}
+export type EditGameResponse = null;
+export const EditGame = {
+  type: RequestType.POST,
+  path: "/editgame",
+  route: "games",
+  request: {
+    name: "",
+    description: "",
+    credits: "",
+    collection: "",
+    link: "",
+    uuid:""
+  },
+
+}
 
 export interface CollectionRemoveRequest {
   collection: string;

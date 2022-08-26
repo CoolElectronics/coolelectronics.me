@@ -220,7 +220,6 @@ export interface User {
   permissions: object;
   notifications: Notification[];
   settings: ClientUserSettings;
-  files: string[];
   boards: string[];
   pushsubscription: PushSubscription | null;
 }
@@ -256,7 +255,6 @@ function constructUser(username: string, hash: string): User {
     settings: {
       pushNotifs: true,
     },
-    files: [],
     boards: [],
     pushsubscription: null,
   };
@@ -281,12 +279,15 @@ export async function constructClientUser(
     };
   }
 }
-export interface Notification {}
 export interface UserPayload {
   userid: string;
 }
 type Something = Defined extends void ? never : Defined;
 type Defined = any extends undefined ? never : any;
 function updateUserSchema(olduser: any): User {
+  delete olduser.files;
+  if (!olduser.notifications){
+    olduser.notifications = [];
+  }
   return olduser;
 }

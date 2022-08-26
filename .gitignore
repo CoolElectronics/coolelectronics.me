@@ -26,3 +26,6 @@ dist-ssr
 
 #c.me specific
 pfp
+dump
+Cargo.lock
+target

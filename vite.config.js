@@ -14,6 +14,8 @@ const routes = [
   "admin",
   "404",
   "forbidden",
+  "playground",
+  "sparkboard"
 ];
 let input = { main: resolve(root, "index.html") };
 for (let route of routes) {
@@ -30,17 +32,6 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input,
-      // {
-      //   main: resolve(root, "index.html"),
-      //   sign: resolve(root, "sign", "sign.html"),
-      //   home: resolve(root, "home", "home.html"),
-      //   chat: resolve(root, "chat", "chat.html"),
-      //   games: resolve(root, "games", "games.html"),
-      //   account: resolve(root, "account", "account.html"),
-      //   admin: resolve(root, "admin", "admin.html"),
-      //   404: resolve(root, "404", "404.html"),
-      //   forbidden: resolve(root, "forbidden", "forbidden.html"),
-      // },
     },
   },
 });

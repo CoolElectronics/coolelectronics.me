@@ -46,7 +46,7 @@ export interface ClientUserSettings {
 }
 export interface ClientSettings {}
 export interface ClientGame {
-  title: string;
+  name: string;
   addedby: string;
   rating: number;
   credits: string;
@@ -62,6 +62,11 @@ export interface ClientGameCollection {
   description: string;
 }
 
+export interface Notification {
+  heading:string;
+  text:string;
+}
+
 export const enum RequestType {
   GET,
   POST,
@@ -75,4 +80,8 @@ export interface API {
 }
 export interface Error {
   error: string;
+  trace?: string;
+}
+export interface Failure{
+  failure:string;
 }

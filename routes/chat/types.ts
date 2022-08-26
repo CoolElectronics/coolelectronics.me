@@ -5,12 +5,12 @@ import {
   RequestType,
 } from "../../clienttypes";
 
-export interface ChatFetchRequest {
+export interface FetchRequest {
   page: number;
   id: string;
 }
-export type ChatFetchResponse = ClientChatMessage[];
-export const ChatFetch = {
+export type FetchResponse = ClientChatMessage[];
+export const Fetch = {
   type: RequestType.POST,
   path: "/fetch",
   route: "chat",
@@ -20,12 +20,12 @@ export const ChatFetch = {
   },
 };
 
-export interface ChatNewRoomRequest {
+export interface NewRoomRequest {
   name: string;
   public: boolean;
 }
-export type ChatNewRoomResponse = ClientRoom;
-export const ChatNewRoom = {
+export type NewRoomResponse = ClientRoom;
+export const NewRoom = {
   type: RequestType.POST,
   path: "/newroom",
   route: "chat",
@@ -35,19 +35,19 @@ export const ChatNewRoom = {
   },
 };
 
-export type ChatFetchPublicResponse = ClientRoom[];
-export const ChatFetchPublic = {
+export type FetchPublicResponse = ClientRoom[];
+export const FetchPublic = {
   type: RequestType.GET,
   path: "/fetchpublic",
   route: "chat",
   request: {},
 };
 
-export interface ChatJoinPublicRequest {
+export interface JoinPublicRequest {
   uuid: string;
 }
-export type ChatJoinPublicResponse = null;
-export const ChatJoinPublic = {
+export type JoinPublicResponse = null;
+export const JoinPublic = {
   type: RequestType.POST,
   path: "/joinpublic",
   route: "chat",
@@ -56,12 +56,12 @@ export const ChatJoinPublic = {
   },
 };
 
-export interface ChatInviteUserRequest {
+export interface InviteUserRequest {
   room: string;
   user: string;
 }
-export type ChatInviteUserResponse = null;
-export const ChatInviteUser = {
+export type InviteUserResponse = null;
+export const InviteUser = {
   type: RequestType.POST,
   path: "/inviteuser",
   route: "chat",
@@ -70,12 +70,12 @@ export const ChatInviteUser = {
     user: "",
   },
 };
-export interface ChatRemoveUserRequest {
+export interface RemoveUserRequest {
   room: string;
   user: string;
 }
-export type ChatRemoveUserResponse = null;
-export const ChatRemoveUser = {
+export type RemoveUserResponse = null;
+export const RemoveUser = {
   type: RequestType.POST,
   path: "/removeuser",
   route: "chat",
@@ -85,11 +85,11 @@ export const ChatRemoveUser = {
   },
 };
 
-export interface ChatInvitableUsersRequest {
+export interface InvitableUsersRequest {
   room: string;
 }
-export type ChatInvitableUsersResponse = ClientUser[];
-export const ChatInvitableUsers = {
+export type InvitableUsersResponse = ClientUser[];
+export const InvitableUsers = {
   type: RequestType.POST,
   path: "/invitableusers",
   route: "chat",
@@ -98,13 +98,13 @@ export const ChatInvitableUsers = {
   },
 };
 
-export interface ChatChangeRoomSettingsRequest {
+export interface ChangeRoomSettingsRequest {
   room: string;
   name: string;
   public: boolean;
 }
-export type ChatChangeRoomSettingsResponse = null;
-export const ChatChangeRoomSettings = {
+export type ChangeRoomSettingsResponse = null;
+export const ChangeRoomSettings = {
   type: RequestType.POST,
   path: "/changeroomsettings",
   route: "chat",
@@ -114,11 +114,11 @@ export const ChatChangeRoomSettings = {
     public: false,
   },
 };
-export interface ChatDeleteRoomRequest {
+export interface DeleteRoomRequest {
   room: string;
 }
-export type ChatDeleteRoomResponse = null;
-export const ChatDeleteRoom = {
+export type DeleteRoomResponse = null;
+export const DeleteRoom = {
   type: RequestType.POST,
   path: "/deleteroom",
   route: "chat",
@@ -126,11 +126,11 @@ export const ChatDeleteRoom = {
     room: "",
   },
 };
-export interface ChatLeaveRoomRequest {
+export interface LeaveRoomRequest {
   room: string;
 }
-export type ChatLeaveRoomResponse = null;
-export const ChatLeaveRoom = {
+export type LeaveRoomResponse = null;
+export const LeaveRoom = {
   type: RequestType.POST,
   path: "/leaveroom",
   route: "chat",

@@ -1,14 +1,17 @@
 import express, { Application, IRoute, Request, Response } from "express";
-import { API, RequestType } from "./clienttypes";
+import { API, Error, RequestType } from "./clienttypes";
 
 import indexRoute, { socketConnect } from "./routes/index";
-import signRoute from "./routes/sign";
-import homeRoute from "./routes/home";
+import signRoute from "./routes/sign/sign";
+import homeRoute from "./routes/home/home";
 import chatRoute from "./routes/chat/chat";
-import accountRoute from "./routes/account";
-import adminRoute from "./routes/admin";
+import accountRoute from "./routes/account/account";
+import adminRoute from "./routes/admin/admin";
 import gamesRoute from "./routes/games/games";
-import ftpRoute from "./routes/ftp";
+import ftpRoute from "./routes/ftp/ftp";
+import playgroundRoute from "./routes/playground/playground";
+import sparkboardRoute from "./routes/sparkboard/sparkboard"
+
 import { connect, Database, User } from "./db";
 
 import cors from "cors";
@@ -22,10 +25,8 @@ import * as path from "path";
 import { Server, Socket } from "socket.io";
 
 import http from "http";
-import { listeners } from "process";
 import fileUpload from "express-fileupload";
 import webpush from "web-push";
-import { TypeOfTag } from "typescript";
 
 const port = 8080;
 
@@ -33,6 +34,9 @@ const app = express();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
+
+app.set("trust proxy", "loopback");
+
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -52,7 +56,7 @@ try {
     process.env.PUSH_PUB!,
     process.env.PUSH_PRIV!
   );
-} catch {}
+} catch { }
 
 global.rootDir = path.resolve(__dirname);
 
@@ -80,6 +84,8 @@ global.rootDir = path.resolve(__dirname);
     adminRoute,
     gamesRoute,
     ftpRoute,
+    playgroundRoute,
+    sparkboardRoute,
   ];
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
@@ -91,12 +97,12 @@ global.rootDir = path.resolve(__dirname);
     if (misc.visitedips.includes(req.ip)) {
       res.send(
         "hey! you've already been here. if you were here to see what the current count is, its " +
-          misc.biocounter
+        misc.biocounter
       );
     } else {
       res.send(
         "thanks for helping me answer my question. if you were wondering, the answer is " +
-          misc.biocounter
+        misc.biocounter
       );
       state.db.modifyOne("Misc", {}, (m) => {
         m.visitedips.push(req.ip);
@@ -145,9 +151,9 @@ global.rootDir = path.resolve(__dirname);
                   res.send({ error: "invalid schema" });
                   console.log(
                     "bad schema. wanted " +
-                      endpoint.api.request +
-                      " got " +
-                      req.body
+                    endpoint.api.request +
+                    " got " +
+                    req.body
                   );
                 }
               } else {
@@ -305,4 +311,7 @@ class AppCache<K, V, C> {
     delete this.valmap[o.val];
     delete this.umap[id];
   }
+}
+export function error(err:string): Error{
+  return {error: err, trace: new Error().stack!}
 }

@@ -1,22 +1,406 @@
 <script lang="ts">
-  import jq from "jquery";
   import TopBar from "../components/TopBar.svelte";
+
+  import * as PIXI from "pixi.js";
+  import { Viewport } from "pixi-viewport";
+  import {
+    Circle,
+    Container,
+    DisplayObject,
+    Graphics,
+    InteractionData,
+    SCALE_MODES,
+    Sprite,
+  } from "pixi.js";
+  import { onMount } from "svelte/internal";
   
-  // let games:
-  // let game:string 
+  import { FontAwesomeIcon } from "fontawesome-svelte";
+import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons";
+
+  const COLORS = {
+    WHITE: 0xf9f5d7,
+    WHITE1: 0xebdbb2,
+    WHITE2: 0xd5c4a1,
+    WHITE3: 0xa89984,
+    BLACK: 0x282828,
+    BLACK1: 0x3c3836,
+    BLACK2: 0x504945,
+    BLACK3: 0x7c6f64,
+  };
+
+  let htmlparent: HTMLElement;
+  //
+  // $("#add").addEventListener("click", addNode);
+  let boardtitle = "Untitled Board";
+
+  var rootnodes: Node[] = [];
+  var nodes: Node[] = [];
+  var selectednode: Node | null = null;
+  var viewport:Viewport;
+  onMount(() => {
+    const app = new PIXI.Application({
+      resizeTo: htmlparent as HTMLElement,
+      backgroundColor: 0x1d2021,
+    });
+    htmlparent.appendChild(app.view);
+
+    // create viewport
+    const ratio = 16 / 9;
+    console.log(ratio);
+    viewport = new Viewport({
+      screenWidth: app.view.width,
+      screenHeight: app.view.height,
+      worldWidth: 4000 * ratio,
+      worldHeight: 4000 / ratio,
+
+      interaction: app.renderer.plugins.interaction, // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+    });
+
+    app.stage.addChild(viewport);
+
+    viewport.drag().pinch().wheel().decelerate();
+    viewport.clamp({
+      direction: "all",
+    });
+    viewport.clampZoom({
+      minScale: 0.4,
+      maxScale: 20,
+    });
+
+    viewport.on("pointerdown", () => {
+      // let properties = $("#properties");
+      // selectednode = null;
+      // properties.style.display = "none";
+    });
+
+    const graphics = new Graphics();
+
+    viewport.addChild(graphics);
+
+    let lastscaled;
+
+    app.ticker.add((dt) => {
+      viewport.screenWidth = app.view.width;
+      viewport.screenHeight = app.view.height;
+      let interval = 80;
+      // let scale = 25;
+      // let snap = 1000;
+      // let interval = viewport.getVisibleBounds().width / scale;
+      // interval = Math.floor(interval / snap) * snap
+      // interval = Math.max(viewport.getVisibleBounds().width / scale, interval);
+      if (viewport.scaled > 0.7) {
+        interval = 80;
+      }
+      if (viewport.scaled > 1) {
+        interval = 40;
+      }
+      if (viewport.scaled > 1.3) {
+        interval = 20;
+      }
+      if (viewport.scaled > 1.6) {
+        interval = 10;
+      }
+      if (viewport.scaled > 2) {
+        interval = 5;
+      }
+      let vwidth = viewport.worldWidth;
+      let vheight = viewport.worldHeight;
+      if (viewport.getVisibleBounds() != lastscaled) {
+        graphics.clear();
+
+        graphics.lineStyle({
+          width: interval / 40,
+          color: COLORS.WHITE3,
+        });
+        let rect = new PIXI.Rectangle(
+          viewport.getVisibleBounds().x - interval,
+          viewport.getVisibleBounds().y - interval,
+          viewport.getVisibleBounds().width + interval,
+          viewport.getVisibleBounds().height + interval
+        );
+        for (let x = 0; x < vwidth; x += interval) {
+          for (let y = 0; y < vheight; y += interval) {
+            if (rect.contains(x, y)) {
+              graphics.drawRect(x, y, interval, interval);
+            }
+          }
+        }
+        lastscaled = viewport.getVisibleBounds();
+      }
+      nodes.forEach((n) => {
+        n.render();
+      });
+    });
+  });
+  function selectnode(node: Node) {
+    // selectednode = node;
+    //
+    // let properties = $("#properties");
+    // $("#properties-name").innerText = node.name;
+    // $<HTMLTextAreaElement>("#properties-description").value = node.description;
+    // properties.style.display = "block";
+  }
+
+  class Node {
+    position: Vec2;
+    root: Container;
+    children: Node[] = [];
+    parent: Node | null;
+    name = "node";
+    graphics = new Graphics();
+    text: PIXI.Text;
+    dragging = false;
+    description = "";
+    constructor(parent: Node | null) {
+      this.parent = parent;
+
+      this.position = { x: 0, y: 0 };
+      this.root = new Container();
+      if (parent != null) {
+        this.root.scale = {
+          x: parent.root.scale.x / 1.2,
+          y: parent.root.scale.y / 1.2,
+        };
+      }
+
+      let outer = new Graphics();
+      outer.beginFill(COLORS.WHITE);
+      outer.drawCircle(40, 40, 50);
+      outer.endFill();
+      outer.interactive = true;
+
+      let inner = new Graphics();
+      inner.beginFill(0xfb4934);
+      inner.drawCircle(40, 40, 40);
+      inner.endFill();
+      inner.interactive = true;
+
+      // inner
+
+      let data: InteractionData | null = null;
+      const outerdragend = () => {
+        viewport.interactive = true;
+        if (data == null) return;
+        let n = new Node(this);
+        selectnode(n);
+        let pos = data.getLocalPosition(this.root);
+        n.position.x = pos.x;
+        n.position.y = pos.y;
+
+        this.children.push(n);
+      };
+      outer.on("pointerdown", (e) => {
+        viewport.interactive = false;
+        data = e.data;
+      });
+      outer.on("pointerup", outerdragend);
+      outer.on("pointerupoutside", outerdragend);
+
+      const innerdragend = () => {
+        viewport.interactive = true;
+        this.dragging = false;
+
+        let pos = data!.getLocalPosition(this.root);
+        let nx = pos.x * this.root.scale.x - 40 * this.root.scale.x;
+        let ny = pos.y * this.root.scale.x - 40 * this.root.scale.x;
+        console.log(nx);
+        if (Math.abs(nx) > 100 || Math.abs(ny) > 100) {
+          this.position.x += nx;
+          this.position.y += ny;
+        }
+        selectnode(this);
+      };
+      inner.on("pointerdown", (e) => {
+        viewport.interactive = false;
+        data = e.data;
+        this.dragging = true;
+      });
+      // inner.on("pointermove", () => {
+      //     if (this.dragging) {
+      //         let pos = data!.getLocalPosition(this.root, this.position, startdragpos);
+      //         // this.position.x = pos.x;
+      //         // this.position.y = pos.y;
+      //     }
+      // })
+      inner.on("pointerup", innerdragend);
+      inner.on("pointerupoutside", innerdragend);
+
+      this.text = new PIXI.Text(
+        this.name,
+        new PIXI.TextStyle({
+          wordWrap: true,
+          breakWords: true,
+          wordWrapWidth: 60,
+          lineHeight: 20,
+          fontSize: 25,
+          align: "center",
+        })
+      );
+      this.text.updateText(false);
+      this.text.resolution = 5;
+      this.text.x = 10;
+      this.text.y = 10;
+      this.root.addChild(this.graphics);
+      this.root.addChild(outer);
+
+      this.root.addChild(inner);
+      this.root.addChild(this.text);
+      viewport.addChild(this.root);
+
+      parent?.root.addChild(this.root);
+      // enable this if you want idk
+
+      nodes.push(this);
+    }
+    render() {
+      this.root.x = this.position.x;
+      this.root.y = this.position.y;
+      this.text.text = this.name;
+
+      this.text.style.fontSize = 25;
+      while (
+        this.text.getLocalBounds().height > 60 &&
+        (this.text.style.fontSize as number) > 2
+      ) {
+        this.text.style.fontSize = (this.text.style.fontSize as number) - 1;
+      }
+      this.graphics.clear();
+
+      this.graphics.lineStyle({
+        color: COLORS.WHITE1,
+        width: 10,
+      });
+      this.children.forEach((n) => {
+        let noffset = 40 * n.root.scale.x;
+        let toffset = 40 * this.root.scale.x;
+        this.graphics.moveTo(n.position.x + noffset, n.position.y + noffset);
+        this.graphics.lineTo(toffset, toffset);
+      });
+    }
+  }
+
+  class Vec2 {
+    x: number;
+    y: number;
+    constructor(x = 0, y = 0) {
+      this.x = x;
+      this.y = y;
+    }
+  }
+  function addNode() {
+    let node = new Node(null);
+    // viewport.to
+    // let v = { x: app.view.width / viewport.scaled, y: app.view.height / viewport.scaled }
+    let bounds = viewport.getVisibleBounds();
+    node.position.x = bounds.x + bounds.width / 2;
+    node.position.y = bounds.y + bounds.height / 2;
+    rootnodes.push(node);
+    selectnode(node);
+  }
+  function save() {
+    let savedat: { title: any; nodes: any[] } = {
+      title: boardtitle,
+      nodes: [],
+    };
+    rootnodes.forEach((n) => {
+      savedat.nodes.push(serializeNode(n));
+    });
+    return savedat;
+  }
+  function load(savedat: { title: any; nodes: any[] }): void {
+    boardtitle = savedat.title;
+
+    savedat.nodes.forEach((nodedat) => {
+      let rn = deserializeNode(nodedat, null);
+      rootnodes.push(rn);
+    });
+  }
+  function serializeNode(n: Node): any {
+    return {
+      name: n.name,
+      pos: n.position,
+      description: n.description,
+      children: n.children.map(serializeNode),
+    };
+  }
+  function deserializeNode(nodedat: any, parent: Node | null): Node {
+    let node = new Node(parent);
+    console.log(nodedat.pos);
+    node.position = nodedat.pos;
+    console.log(node.position);
+    node.description = nodedat.description;
+    node.name = nodedat.name;
+    nodedat.children.forEach((child) => {
+      node.children.push(deserializeNode(child, node));
+    });
+
+    nodes.push(node);
+    return node;
+  }
+  //
+  // const propNameInput = $<HTMLInputElement>("#properties-name-input");
+  //
+  // $("#properties-name-edit").addEventListener("click", () => {
+  //   $("#properties-name").style.display = "none";
+  //   $("#properties-name-input").style.display = "block";
+  //
+  //   propNameInput.value = selectednode!.name;
+  // });
+  // $("#properties-description").addEventListener("input", () => {
+  //   selectednode!.description = $<HTMLTextAreaElement>(
+  //     "#properties-description"
+  //   ).value;
+  // });
+  // $("#properties-name-input").addEventListener("keypress", (e) => {
+  //   if (e.key == "Enter") {
+  //     selectednode!.name = propNameInput.value!;
+  //     $("#properties-name").style.display = "block";
+  //     $("#properties-name-input").style.display = "none";
+  //   }
+  // });
+  // const boardTitleInput = $<HTMLInputElement>("#board-title-input");
+  // $("#title-edit").addEventListener("click", () => {
+  //   $("#board-title").style.display = "none";
+  //   boardTitleInput.style.display = "block";
+  //
+  //   boardTitleInput.value = boardtitle;
+  // });
+  //
+  // boardTitleInput.addEventListener("keypress", (e) => {
+  //   if (e.key == "Enter") {
+  //     boardtitle = boardTitleInput.value;
+  //     document.title = boardtitle;
+  //     $("#board-title").innerText = boardtitle;
+  //     $("#board-title").style.display = "block";
+  //     boardTitleInput.style.display = "none";
+  //   }
+  // });
 </script>
 
-<main class = "dark">
-<TopBar title = "File Hosting"></TopBar>
-<div id = "game" class ="darkm1">
-  <p class = "text-center text">game title</p>
-  <iframe/>
-</div>
-<div id ="gamesview" class = "darkm2">
- <!-- <div for each></div>  -->
-</div>
+<main class="dark flex flex-col">
+  <TopBar title="SparkBoard" />
+  <div class = "darkm1 flex justify-between">
+    <div>
+      <div class = "flex">
+        <p contenteditable class = "text text-xl" bind:innerHTML={boardtitle}></p>
+      </div>
+    </div>
+    <div class = "flex">
+      <div on:click = {addNode}>
+        <FontAwesomeIcon icon = {faPlus} size = "2x" inverse = {true}/>
+      </div>
+      <div on:click = {save}>
+        <FontAwesomeIcon icon = {faFloppyDisk} size = "2x" inverse = {true}/>
+      </div>
+    </div>
+  </div>
+  <div class = "flex flex-1">
+    <div class = "flex-1" bind:this={htmlparent} />
+    <div class = "dark">
+      <p class = "text">lol</p>
+    </div>
+  </div>
 </main>
 
 <style>
-
 </style>

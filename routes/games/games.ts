@@ -1,7 +1,7 @@
 import { User } from "../../db";
 import express, { Request, Response } from "express";
 import { Socket } from "socket.io";
-import { App, parse } from "../../main";
+import { App, error, parse } from "../../main";
 import {
   ClientGame,
   ClientGameCollection,
@@ -10,16 +10,8 @@ import {
 } from "../../clienttypes";
 import { randomUUID } from "crypto";
 import xss from "xss";
-import {
-  CollectionAdd,
-  CollectionAddRequest,
-  CollectionAddResponse,
-  CollectionRemove,
-  CollectionRemoveRequest,
-  NewCollection,
-  NewCollectionRequest,
-  NewCollectionResponse,
-} from "./types";
+import * as Games from "./types";
+import { trace } from "console";
 
 export default {
   path: "games",
@@ -31,18 +23,18 @@ export default {
     {
       path: "/collections",
       type: RequestType.GET,
-      route: async (state: App, User, req: Request, res: Response) => {
+      route: async (state: App, req: Request, res: Response) => {
         let collections = await state.db.getAll("Games");
         res.send(collections);
       },
     },
     {
-      api: NewCollection,
+      api: Games.NewCollection,
       route: async (
         state: App,
         user: User,
-        body: NewCollectionRequest
-      ): Promise<NewCollectionResponse | Error> => {
+        body: Games.NewCollectionRequest
+      ): Promise<Games.NewCollectionResponse | Error> => {
         let sanitizedname = xss(body.name).normalize();
         let sanitizeddescription = xss(body.description).normalize();
         if (sanitizedname != "") {
@@ -59,7 +51,7 @@ export default {
           console.log(body);
         }
 
-        return { error: "bad name" };
+        return error( "bad name" );
       },
       require: {
         games: {
@@ -68,26 +60,68 @@ export default {
       },
     },
     {
-      api: CollectionAdd,
+      api:Games.DeleteGame,
+      route: async(state:App,user:User,body:Games.DeleteGameRequest):Promise<Games.DeleteGameResponse | Error> =>{
+        let collection = await state.db.getOne("Games",{uuid:body.collection});
+        if (collection){
+          state.db.modifyOneProp("Games",{uuid:body.collection},"games",games=>games.filter(g=>g.uuid != body.uuid));
+          return null;
+        }else{
+          return error("could not find collection");
+        }
+      },
+      require:{
+        games:{
+          remove:true,
+        }
+      }
+    },
+    {
+      api: Games.EditCollection,
       route: async (
         state: App,
         user: User,
-        body: CollectionAddRequest
-      ): Promise<CollectionAddResponse | Error> => {
+        body: Games.EditCollectionRequest
+      ): Promise<Games.EditCollectionResponse | Error> => {
+        let collection = await state.db.getOne("Games", { uuid: body.uuid });
+        if (collection) {
+          let sanitizedname = xss(body.name).normalize();
+          let sanitizeddescription = xss(body.description).normalize();
+          if (sanitizedname != "") {
+            state.db.modifyOne("Games",{uuid:body.uuid},col=>{
+              col.name = sanitizedname;
+              col.description = sanitizeddescription;
+            });
+            return null;
+          } else {
+            return error("bad name");
+          }
+        } else {
+          return error("collection does not exist");
+        }
+      },
+    },
+    {
+      api: Games.AddGame,
+      route: async (
+        state: App,
+        user: User,
+        body: Games.AddGameRequest
+      ): Promise<Games.AddGameResponse | Error> => {
         let collection = await state.db.getOne("Games", {
           uuid: body.collection,
         });
         if (collection) {
-          let sanitizedname = xss(body.title).normalize();
+          let sanitizedname = xss(body.name).normalize();
           let sanitizeddescription = xss(body.description).normalize();
-          let sanitizedcredits = xss(body.credits);
+          let sanitizedcredits = xss(body.credits).normalize();
           if (sanitizedname != "") {
             let game: ClientGame = {
               uuid: randomUUID(),
-              title: sanitizedname,
+              name: sanitizedname,
               description: sanitizeddescription,
               addedby: user.uuid,
-              rating: body.rating,
+              rating: 0,
               credits: sanitizedcredits,
               link: body.link,
             };
@@ -99,9 +133,9 @@ export default {
             );
             return game;
           }
-          return { error: "bad name" };
+          return error("bad name");
         } else {
-          return { error: "collection not found" };
+          return error( "collection not found" );
         }
       },
       require: {
@@ -111,8 +145,53 @@ export default {
       },
     },
     {
-      api: CollectionRemove,
-      route: async (state: App, user: User, body: CollectionRemoveRequest) => {
+      api: Games.EditGame,
+      route: async (
+        state: App,
+        user: User,
+        body: Games.EditGameRequest
+      ): Promise<Games.EditGameResponse | Error> => {
+        let collection = await state.db.getOne("Games", {
+          uuid: body.collection,
+        });
+        if (collection) {
+          let sanitizedname = xss(body.name).normalize();
+          let sanitizeddescription = xss(body.description).normalize();
+          let sanitizedcredits = xss(body.credits);
+          if (sanitizedname != "") {
+            await state.db.modifyOne(
+              "Games",
+              { uuid: body.collection },
+              (games) => {
+                let game: ClientGame = games.games.find(
+                  (g) => g.uuid == body.uuid
+                );
+                game.description = sanitizeddescription;
+                game.name = sanitizedname;
+                game.credits = sanitizedcredits;
+                game.link = body.link;
+              }
+            );
+            return null;
+          }
+          return error("bad name");
+        } else {
+          return error("collection not found");
+        }
+      },
+      require: {
+        games: {
+          add: true,
+        },
+      },
+    },
+    {
+      api: Games.CollectionRemove,
+      route: async (
+        state: App,
+        user: User,
+        body: Games.CollectionRemoveRequest
+      ) => {
         let collection = await state.db.getOne("Games", {
           uuid: body.collection,
         });
@@ -122,7 +201,7 @@ export default {
             .deleteOne({ uuid: body.collection });
           return;
         } else {
-          return { error: "collection not found" };
+          return error( "collection not found" );
         }
       },
       require: {

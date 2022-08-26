@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite build --mode development;npx ts-node --project node-tsconfig.json main.ts",
+    "prod": "npx ts-node --project node-tsconfig.json main.ts",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -17,6 +18,7 @@
     "@types/jquery": "^3.5.14",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/node": "^18.6.3",
+    "@types/web-push": "^3.3.2",
     "autoprefixer": "^10.4.7",
     "jquery": "^3.6.0",
     "postcss": "^8.4.14",
@@ -31,7 +33,6 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.2",
     "@types/busboy": "^1.5.0",
     "@types/express-fileupload": "^1.2.3",
-    "@types/web-push": "^3.3.2",
     "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.20.0",
@@ -51,6 +52,7 @@
     "mongodb": "^4.8.1",
     "socket.io": "^4.5.1",
     "socket.io-client": "^4.5.1",
+    "svelte-ace": "^1.0.21",
     "svelte-click-outside": "^1.0.0",
     "svelte-scrollto": "^0.2.0",
     "time-ago": "^0.2.1",
