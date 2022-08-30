@@ -29,6 +29,7 @@
     collections = res.data;
   });
 
+  request(Games.EditCollection);
   async function makeCollection() {
     collectionbuffer = {
       name: "a collection",

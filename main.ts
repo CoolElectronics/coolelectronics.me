@@ -195,7 +195,7 @@ global.rootDir = path.resolve(__dirname);
     });
   });
   app.use((req, res) => {
-    res.sendFile(__dirname + "/dist/src/404/404.html");
+    res.status(404).sendFile(__dirname + "/dist/src/404/404.html");
   });
   httpServer.listen(port, () =>
     console.log(`Example app is listening on port ${port}.`)

@@ -51,7 +51,7 @@ export default {
           console.log(body);
         }
 
-        return error( "bad name" );
+        return error("bad name");
       },
       require: {
         games: {
@@ -60,21 +60,32 @@ export default {
       },
     },
     {
-      api:Games.DeleteGame,
-      route: async(state:App,user:User,body:Games.DeleteGameRequest):Promise<Games.DeleteGameResponse | Error> =>{
-        let collection = await state.db.getOne("Games",{uuid:body.collection});
-        if (collection){
-          state.db.modifyOneProp("Games",{uuid:body.collection},"games",games=>games.filter(g=>g.uuid != body.uuid));
+      api: Games.DeleteGame,
+      route: async (
+        state: App,
+        user: User,
+        body: Games.DeleteGameRequest
+      ): Promise<Games.DeleteGameResponse | Error> => {
+        let collection = await state.db.getOne("Games", {
+          uuid: body.collection,
+        });
+        if (collection) {
+          state.db.modifyOneProp(
+            "Games",
+            { uuid: body.collection },
+            "games",
+            (games) => games.filter((g) => g.uuid != body.uuid)
+          );
           return null;
-        }else{
+        } else {
           return error("could not find collection");
         }
       },
-      require:{
-        games:{
-          remove:true,
-        }
-      }
+      require: {
+        games: {
+          remove: true,
+        },
+      },
     },
     {
       api: Games.EditCollection,
@@ -88,7 +99,7 @@ export default {
           let sanitizedname = xss(body.name).normalize();
           let sanitizeddescription = xss(body.description).normalize();
           if (sanitizedname != "") {
-            state.db.modifyOne("Games",{uuid:body.uuid},col=>{
+            state.db.modifyOne("Games", { uuid: body.uuid }, (col) => {
               col.name = sanitizedname;
               col.description = sanitizeddescription;
             });
@@ -99,6 +110,11 @@ export default {
         } else {
           return error("collection does not exist");
         }
+      },
+      require: {
+        games: {
+          remove: true,
+        },
       },
     },
     {
@@ -135,7 +151,7 @@ export default {
           }
           return error("bad name");
         } else {
-          return error( "collection not found" );
+          return error("collection not found");
         }
       },
       require: {
@@ -201,7 +217,7 @@ export default {
             .deleteOne({ uuid: body.collection });
           return;
         } else {
-          return error( "collection not found" );
+          return error("collection not found");
         }
       },
       require: {

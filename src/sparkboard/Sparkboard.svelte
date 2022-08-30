@@ -1,5 +1,6 @@
 <script lang="ts">
   import TopBar from "../components/TopBar.svelte";
+  import Separator from "./Separator.svelte";
 
   import * as PIXI from "pixi.js";
   import { Viewport } from "pixi-viewport";
@@ -13,9 +14,13 @@
     Sprite,
   } from "pixi.js";
   import { onMount } from "svelte/internal";
-  
+
   import { FontAwesomeIcon } from "fontawesome-svelte";
-import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons";
+  import {
+    faEdit,
+    faFloppyDisk,
+    faPlus,
+  } from "@fortawesome/free-solid-svg-icons";
 
   const COLORS = {
     WHITE: 0xf9f5d7,
@@ -36,7 +41,7 @@ import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons"
   var rootnodes: Node[] = [];
   var nodes: Node[] = [];
   var selectednode: Node | null = null;
-  var viewport:Viewport;
+  var viewport: Viewport;
   onMount(() => {
     const app = new PIXI.Application({
       resizeTo: htmlparent as HTMLElement,
@@ -68,9 +73,7 @@ import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons"
     });
 
     viewport.on("pointerdown", () => {
-      // let properties = $("#properties");
-      // selectednode = null;
-      // properties.style.display = "none";
+      selectednode = null;
     });
 
     const graphics = new Graphics();
@@ -133,7 +136,7 @@ import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons"
     });
   });
   function selectnode(node: Node) {
-    // selectednode = node;
+    selectednode = node;
     //
     // let properties = $("#properties");
     // $("#properties-name").innerText = node.name;
@@ -379,26 +382,34 @@ import { faEdit, faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons"
 
 <main class="dark flex flex-col">
   <TopBar title="SparkBoard" />
-  <div class = "darkm1 flex justify-between">
+  <div class="darkm2 flex justify-evenly p-1">
     <div>
-      <div class = "flex">
-        <p contenteditable class = "text text-xl" bind:innerHTML={boardtitle}></p>
+      <div class="flex">
+        <p contenteditable class="text text-xl" bind:innerHTML={boardtitle} />
       </div>
     </div>
-    <div class = "flex">
-      <div on:click = {addNode}>
-        <FontAwesomeIcon icon = {faPlus} size = "2x" inverse = {true}/>
+    <div class="flex">
+      <div on:click={addNode}>
+        <FontAwesomeIcon icon={faPlus} size="2x" inverse={true} />
       </div>
-      <div on:click = {save}>
-        <FontAwesomeIcon icon = {faFloppyDisk} size = "2x" inverse = {true}/>
+      <div on:click={save}>
+        <FontAwesomeIcon icon={faFloppyDisk} size="2x" inverse={true} />
       </div>
     </div>
   </div>
-  <div class = "flex flex-1">
-    <div class = "flex-1" bind:this={htmlparent} />
-    <div class = "dark">
-      <p class = "text">lol</p>
-    </div>
+  <div class="flex flex-1">
+    <div class="flex-1" bind:this={htmlparent} />
+    {#if selectednode != null}
+      <div class="darkm2 p-5">
+        <div class="flex items-center justify-center">
+          <p class="text text-xl">{selectednode.name}</p>
+        </div>
+        <Separator />
+        <div contenteditable bind:innerHTML={selectednode.description} />
+        <Separator />
+
+      </div>
+    {/if}
   </div>
 </main>
 

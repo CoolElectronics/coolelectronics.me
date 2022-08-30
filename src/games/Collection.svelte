@@ -18,7 +18,7 @@
   <div class = "flex items-center justify-between">
     <div>
       <p class="text text-xl">{collection.name}</p>
-      <p class="text">{collection.description}</p>
+      <p class="text">{@html collection.description}</p>
     </div>
     <div class = "hover:scale-125 mr-2 cursor-pointer"on:click = {()=>editcollection(collection)}>
       <FontAwesomeIcon icon = {faPencil} inverse = {true} size = "1x" />
