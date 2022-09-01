@@ -143,10 +143,12 @@
 <main class="dark flex flex-col overflow-y-scroll">
   <TopBar title="Games" />
   {#if selectedgame}
-    <div id="game" class="darkm1">
-      <p class="text text-center text-2xl">{selectedgame.name}</p>
-      <p class="text">{selectedgame.description}</p>
-      <iframe src={selectedgame.link} />
+    <div id="game" class="darkm1 flex">
+      <iframe allow="fullscreen" id = "frame" class = {`flex-1 aspect-video`} src={selectedgame.link} />
+      <div class = "darkm3">
+        <p class="text text-center text-2xl">{selectedgame.name}</p>
+        <p class="text">{selectedgame.description}</p>
+      </div>
     </div>
   {/if}
   <div id="collections" class="darkm2">
@@ -178,5 +180,11 @@
     grid-auto-rows: min-content;
     grid-template-columns: repeat(6, 30fr);
     flex: 1;
+  }
+  #frame{
+  /* max-width: 70%; */
+  }
+  .lexaloffle{
+    /* transform:scale(2); */
   }
 </style>

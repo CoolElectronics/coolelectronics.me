@@ -51,9 +51,11 @@ faSignIn,
   window.onfocus = () => (focused = true);
 
   socket.on("index:notification", () => {});
-
-  Notification.requestPermission();
-
+  try{
+    Notification.requestPermission();
+  }catch{
+  
+  }
   socket.on("chat:newmessage", (msg) => {
     let message: ClientChatMessage = msg.msg;
     if (showtoasts && document.visibilityState == "visible" && focused) {
