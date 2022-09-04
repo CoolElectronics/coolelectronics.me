@@ -61,6 +61,17 @@ export interface ClientGameCollection {
   name: string;
   description: string;
 }
+export interface Board{
+  uuid: string;
+  title: string;
+  nodes: SerializedNode[]
+}
+export interface SerializedNode{
+  name: string;
+  pos: {x:number,y:number};
+  description: string;
+  children: SerializedNode[];
+}
 
 export interface Notification {
   heading:string;

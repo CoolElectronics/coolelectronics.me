@@ -15,7 +15,8 @@ const routes = [
   "404",
   "forbidden",
   "playground",
-  "sparkboard"
+  "sparkboard",
+  "schedule"
 ];
 let input = { main: resolve(root, "index.html") };
 for (let route of routes) {

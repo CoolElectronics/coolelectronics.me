@@ -19,6 +19,7 @@ export async function connect(): Promise<Database> {
     "Rooms",
     "Games",
     "Ftp",
+    "Boards",
     "FriendRequests",
     "Misc"
   ]);
@@ -114,26 +115,13 @@ export class Database {
   async getUser(id: string): Promise<User | null> {
     let user = await this.getOne<User>("Users", { uuid: id });
 
-    let updated = updateUserSchema(user);
-    if (user != updated) {
-      user = updated;
-      this.database
-        .collection("Users")
-        .findOneAndReplace({ uuid: id }, updated);
-    }
-
+    updateUserSchema(user,this);
     return user;
   }
 
   async getUserByName(username: string): Promise<User | null> {
     let user = await this.getOne<User>("Users", { username });
-    let updated = updateUserSchema(user);
-    if (user != updated) {
-      user = updated;
-      this.database
-        .collection("Users")
-        .findOneAndReplace({ username }, updated);
-    }
+    updateUserSchema(user,this);
     return user;
   }
   async addUser(username: string, hash: string) {
@@ -220,8 +208,10 @@ export interface User {
   permissions: object;
   notifications: Notification[];
   settings: ClientUserSettings;
-  boards: string[];
   pushsubscription: PushSubscription | null;
+  boards: string[];
+  files: string[];
+  version: number;
 }
 export interface Room {
   uuid: string;
@@ -256,6 +246,8 @@ function constructUser(username: string, hash: string): User {
       pushNotifs: true,
     },
     boards: [],
+    files: [],
+    version: 2,
     pushsubscription: null,
   };
 }
@@ -284,10 +276,14 @@ export interface UserPayload {
 }
 type Something = Defined extends void ? never : Defined;
 type Defined = any extends undefined ? never : any;
-function updateUserSchema(olduser: any): User {
-  delete olduser.files;
-  if (!olduser.notifications){
-    olduser.notifications = [];
-  }
-  return olduser;
+function updateUserSchema(olduser: any,db) {
+  if (olduser.version == 2) return;
+  olduser.version = 2;
+  olduser.files = [];
+  olduser.boards = [];
+  db.database
+        .collection("Users")
+        .findOneAndReplace({ uuid: olduser.uuid},olduser);
+
+
 }

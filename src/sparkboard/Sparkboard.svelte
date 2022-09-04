@@ -1,6 +1,7 @@
 <script lang="ts">
   import TopBar from "../components/TopBar.svelte";
   import Separator from "./Separator.svelte";
+  import * as Sparkboard from "../../routes/sparkboard/types";
 
   import * as PIXI from "pixi.js";
   import { Viewport } from "pixi-viewport";
@@ -21,6 +22,10 @@
     faFloppyDisk,
     faPlus,
   } from "@fortawesome/free-solid-svg-icons";
+  import request from "../requests";
+  import { Board, SerializedNode } from "../../clienttypes";
+
+  import BoardCard from "./BoardCard.svelte";
 
   const COLORS = {
     WHITE: 0xf9f5d7,
@@ -35,14 +40,46 @@
 
   let htmlparent: HTMLElement;
   //
-  // $("#add").addEventListener("click", addNode);
   let boardtitle = "Untitled Board";
 
   var rootnodes: Node[] = [];
   var nodes: Node[] = [];
   var selectednode: Node | null = null;
   var viewport: Viewport;
-  onMount(() => {
+
+  var selectedboard: string | null = null;
+
+  var allboards: Sparkboard.BoardsResponse;
+
+  onMount(async () => (allboards = await request(Sparkboard.Boards)));
+
+  async function newBoard() {
+    allboards = [...allboards, await request(Sparkboard.NewBoard)];
+  }
+  async function deleteBoard(uuid: string) {
+    allboards = allboards.filter((b) => b.uuid != uuid);
+    request<Sparkboard.DeleteBoardRequest>(Sparkboard.DeleteBoard, {
+      uuid,
+    });
+  }
+  async function save() {
+    if (selectedboard) {
+      let req: Sparkboard.SaveBoardRequest = {
+        uuid: selectedboard,
+        title: boardtitle,
+        nodes: rootnodes.map(serializeNode),
+      };
+      request<Sparkboard.SaveBoardRequest>(Sparkboard.SaveBoard, req);
+    }
+  }
+  async function selectBoard(uuid: string) {
+    selectedboard = uuid;
+    let board = await request<
+      Sparkboard.GetBoardRequest,
+      Sparkboard.GetBoardResponse
+    >(Sparkboard.GetBoard, { uuid });
+    boardtitle = board.title;
+    
     const app = new PIXI.Application({
       resizeTo: htmlparent as HTMLElement,
       backgroundColor: 0x1d2021,
@@ -134,7 +171,10 @@
         n.render();
       });
     });
-  });
+    for (let n of board.nodes) {
+      deserializeNode(n, null);
+    }
+  }
   function selectnode(node: Node) {
     selectednode = node;
     //
@@ -300,24 +340,7 @@
     rootnodes.push(node);
     selectnode(node);
   }
-  function save() {
-    let savedat: { title: any; nodes: any[] } = {
-      title: boardtitle,
-      nodes: [],
-    };
-    rootnodes.forEach((n) => {
-      savedat.nodes.push(serializeNode(n));
-    });
-    return savedat;
-  }
-  function load(savedat: { title: any; nodes: any[] }): void {
-    boardtitle = savedat.title;
 
-    savedat.nodes.forEach((nodedat) => {
-      let rn = deserializeNode(nodedat, null);
-      rootnodes.push(rn);
-    });
-  }
   function serializeNode(n: Node): any {
     return {
       name: n.name,
@@ -326,11 +349,10 @@
       children: n.children.map(serializeNode),
     };
   }
-  function deserializeNode(nodedat: any, parent: Node | null): Node {
+  function deserializeNode(nodedat: SerializedNode, parent: Node | null): Node {
+  console.log(nodedat)
     let node = new Node(parent);
-    console.log(nodedat.pos);
     node.position = nodedat.pos;
-    console.log(node.position);
     node.description = nodedat.description;
     node.name = nodedat.name;
     nodedat.children.forEach((child) => {
@@ -338,6 +360,9 @@
     });
 
     nodes.push(node);
+    if (!parent) {
+      rootnodes.push(node);
+    }
     return node;
   }
   //
@@ -382,35 +407,45 @@
 
 <main class="dark flex flex-col">
   <TopBar title="SparkBoard" />
-  <div class="darkm2 flex justify-evenly p-1">
-    <div>
-      <div class="flex">
-        <p contenteditable class="text text-xl" bind:innerHTML={boardtitle} />
-      </div>
-    </div>
-    <div class="flex">
-      <div on:click={addNode}>
-        <FontAwesomeIcon icon={faPlus} size="2x" inverse={true} />
-      </div>
-      <div on:click={save}>
-        <FontAwesomeIcon icon={faFloppyDisk} size="2x" inverse={true} />
-      </div>
-    </div>
-  </div>
-  <div class="flex flex-1">
-    <div class="flex-1" bind:this={htmlparent} />
-    {#if selectednode != null}
-      <div class="darkm2 p-5">
-        <div class="flex items-center justify-center">
-          <p class="text text-xl">{selectednode.name}</p>
+  {#if selectedboard != null}
+    <div class="darkm2 flex justify-evenly p-1">
+      <div>
+        <div class="flex">
+          <p contenteditable class="text text-xl" bind:innerHTML={boardtitle} />
         </div>
-        <Separator />
-        <div contenteditable bind:innerHTML={selectednode.description} />
-        <Separator />
-
       </div>
-    {/if}
-  </div>
+      <div class="flex">
+        <div on:click={addNode}>
+          <FontAwesomeIcon icon={faPlus} size="2x" inverse={true} />
+        </div>
+        <div on:click={save}>
+          <FontAwesomeIcon icon={faFloppyDisk} size="2x" inverse={true} />
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-1">
+      <div class="flex-1" bind:this={htmlparent} />
+      {#if selectednode != null}
+        <div class="darkm2 p-5">
+          <div class="flex items-center justify-center">
+            <p class="text text-xl">{selectednode.name}</p>
+          </div>
+          <Separator />
+          <div contenteditable bind:innerHTML={selectednode.description} />
+          <Separator />
+        </div>
+      {/if}
+    </div>
+  {:else if allboards}
+    {#each allboards as board}
+      <BoardCard
+        title={board.title}
+        del={() => deleteBoard(board.uuid)}
+        click={() => selectBoard(board.uuid)}
+      />
+    {/each}
+    <button on:click={newBoard}>New</button>
+  {/if}
 </main>
 
 <style>

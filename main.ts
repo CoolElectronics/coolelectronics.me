@@ -10,7 +10,8 @@ import adminRoute from "./routes/admin/admin";
 import gamesRoute from "./routes/games/games";
 import ftpRoute from "./routes/ftp/ftp";
 import playgroundRoute from "./routes/playground/playground";
-import sparkboardRoute from "./routes/sparkboard/sparkboard"
+import sparkboardRoute from "./routes/sparkboard/sparkboard";
+import scheduleRoute from "./routes/schedule/schedule";
 
 import { connect, Database, User } from "./db";
 
@@ -86,6 +87,7 @@ global.rootDir = path.resolve(__dirname);
     ftpRoute,
     playgroundRoute,
     sparkboardRoute,
+    scheduleRoute,
   ];
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));

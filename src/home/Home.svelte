@@ -21,10 +21,10 @@ import { SelfResponse,Self } from "../../routes/index/types";
   <AppButton url = "/chat" title = "Chat Rooms"/>
   <AppButton url = "/games" title = "Games Repository"/>
   <AppButton url = "/ftp" title = "File Hosting"/>
+  <AppButton url = "/sparkboard" title = "SparkBoard"/>
   <AppButton url = "/blogs" title = "Blogs"/>
   <AppButton url = "/account" title = "Account Settings"/>
   <AppButton url = "/admin" title = "Admin Panel"/>
-  <AppButton url = "https://github.com/CoolElectronics" title = "My Github"/>
 </div>
 </main>
 
