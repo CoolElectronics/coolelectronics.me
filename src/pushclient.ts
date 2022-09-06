@@ -1,3 +1,5 @@
+import * as Account from "../routes/account/types";
+import request from "./requests"
 const publicVapidKey =
   "BBzsD4l726AcTRxC9rBxQ6f_b4N-eDJQ5x_DmeRTdLwhT2mWvJw2F7HymaF1A4v7uwG8A-ZfkUuASENO4tUFwuU";
 
@@ -31,15 +33,10 @@ async function registerPushWorker() {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
   });
-  await fetch("/api/account/pushworkersubscribe", {
-    method: "POST",
-    body: JSON.stringify(subscription),
-    headers: {
-      "content-type": "application/json",
-    },
+  await request<Account.PushSubscribeRequest,Account.PushSubscribeResponse>(Account.PushSubscribe,{
+    subscription
   });
 }
-
 // Boilerplate borrowed from https://www.npmjs.com/package/web-push#using-vapid-key-for-applicationserverkey
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

@@ -1,6 +1,4 @@
 <script lang="ts">
-
-
   import Card from "./components/Card.svelte";
   import Background from "./components/Background.svelte";
 

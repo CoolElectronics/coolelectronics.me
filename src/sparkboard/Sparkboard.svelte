@@ -365,44 +365,7 @@
     }
     return node;
   }
-  //
-  // const propNameInput = $<HTMLInputElement>("#properties-name-input");
-  //
-  // $("#properties-name-edit").addEventListener("click", () => {
-  //   $("#properties-name").style.display = "none";
-  //   $("#properties-name-input").style.display = "block";
-  //
-  //   propNameInput.value = selectednode!.name;
-  // });
-  // $("#properties-description").addEventListener("input", () => {
-  //   selectednode!.description = $<HTMLTextAreaElement>(
-  //     "#properties-description"
-  //   ).value;
-  // });
-  // $("#properties-name-input").addEventListener("keypress", (e) => {
-  //   if (e.key == "Enter") {
-  //     selectednode!.name = propNameInput.value!;
-  //     $("#properties-name").style.display = "block";
-  //     $("#properties-name-input").style.display = "none";
-  //   }
-  // });
-  // const boardTitleInput = $<HTMLInputElement>("#board-title-input");
-  // $("#title-edit").addEventListener("click", () => {
-  //   $("#board-title").style.display = "none";
-  //   boardTitleInput.style.display = "block";
-  //
-  //   boardTitleInput.value = boardtitle;
-  // });
-  //
-  // boardTitleInput.addEventListener("keypress", (e) => {
-  //   if (e.key == "Enter") {
-  //     boardtitle = boardTitleInput.value;
-  //     document.title = boardtitle;
-  //     $("#board-title").innerText = boardtitle;
-  //     $("#board-title").style.display = "block";
-  //     boardTitleInput.style.display = "none";
-  //   }
-  // });
+
 </script>
 
 <main class="dark flex flex-col">

@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "inter";
+  src: url("../static/Inter-Regular.ttf");
+}
 :root{
   --darkm3:hsl(280,14%,13%);
   --darkm2:hsl(285,13%,18%);
@@ -63,7 +67,8 @@
 }
 
 .text{
-  color:var(--text)
+  color:var(--text);
+  font-family:inter;
 }
 body{
   width: 100vw;
