@@ -1,9 +1,11 @@
-import { App } from "../../main";
+import { App, error } from "../../main";
 import { User } from "../../db";
 import { Request, Response } from "express";
 import * as proc from "child_process";
 import axios from "axios";
-import { RequestType } from "../../clienttypes";
+import { Error, RequestType } from "../../clienttypes";
+
+import * as Admin from "./types"
 
 export default {
   path: "admin",
@@ -75,18 +77,26 @@ export default {
       },
     },
     {
-      path: "/updateuserpermissions",
-      type: RequestType.POST,
-      route: async (state: App, user: User, req: Request, res: Response) => {
+      api:Admin.SetUserPermissions,
+      route: async (state: App, user: User,body: Admin.SetUserPermissionsRequest):Promise<null | Error> => {
         await state.db.modifyOneProp(
           "Users",
-          { uuid: user.uuid },
+          { uuid: body.uuid },
           "permissions",
-          () => req.body.permissions
+          () =>body.permissions
         );
+        return null;
       },
-      require: { Administrator: true },
+      require: { Administrator: true }
     },
+    {
+      api: Admin.GetAllUsers,
+      require: {Administrator: true},
+      route: async(state:App,user:User): Promise<Admin.GetAllUsersResponse>=>{
+        return state.db.getAll("Users");
+        // NOTE: this will leak hashes. it won't matter however since this is only accessible to me
+      }
+    }
   ],
   listeners: [],
 };

@@ -21,6 +21,7 @@
     faEdit,
     faFloppyDisk,
     faPlus,
+    faTrash,
   } from "@fortawesome/free-solid-svg-icons";
   import request from "../requests";
   import { Board, SerializedNode } from "../../clienttypes";
@@ -72,6 +73,11 @@
       request<Sparkboard.SaveBoardRequest>(Sparkboard.SaveBoard, req);
     }
   }
+  setInterval(save, 15000);
+
+  onbeforeunload = async (event) => {
+    await save();
+  };
   async function selectBoard(uuid: string) {
     selectedboard = uuid;
     let board = await request<
@@ -79,7 +85,7 @@
       Sparkboard.GetBoardResponse
     >(Sparkboard.GetBoard, { uuid });
     boardtitle = board.title;
-    
+
     const app = new PIXI.Application({
       resizeTo: htmlparent as HTMLElement,
       backgroundColor: 0x1d2021,
@@ -122,51 +128,51 @@
     app.ticker.add((dt) => {
       viewport.screenWidth = app.view.width;
       viewport.screenHeight = app.view.height;
-      let interval = 80;
-      // let scale = 25;
-      // let snap = 1000;
-      // let interval = viewport.getVisibleBounds().width / scale;
-      // interval = Math.floor(interval / snap) * snap
-      // interval = Math.max(viewport.getVisibleBounds().width / scale, interval);
-      if (viewport.scaled > 0.7) {
-        interval = 80;
-      }
-      if (viewport.scaled > 1) {
-        interval = 40;
-      }
-      if (viewport.scaled > 1.3) {
-        interval = 20;
-      }
-      if (viewport.scaled > 1.6) {
-        interval = 10;
-      }
-      if (viewport.scaled > 2) {
-        interval = 5;
-      }
-      let vwidth = viewport.worldWidth;
-      let vheight = viewport.worldHeight;
-      if (viewport.getVisibleBounds() != lastscaled) {
-        graphics.clear();
-
-        graphics.lineStyle({
-          width: interval / 40,
-          color: COLORS.WHITE3,
-        });
-        let rect = new PIXI.Rectangle(
-          viewport.getVisibleBounds().x - interval,
-          viewport.getVisibleBounds().y - interval,
-          viewport.getVisibleBounds().width + interval,
-          viewport.getVisibleBounds().height + interval
-        );
-        for (let x = 0; x < vwidth; x += interval) {
-          for (let y = 0; y < vheight; y += interval) {
-            if (rect.contains(x, y)) {
-              graphics.drawRect(x, y, interval, interval);
-            }
-          }
-        }
-        lastscaled = viewport.getVisibleBounds();
-      }
+      // let interval = 80;
+      // // let scale = 25;
+      // // let snap = 1000;
+      // // let interval = viewport.getVisibleBounds().width / scale;
+      // // interval = Math.floor(interval / snap) * snap
+      // // interval = Math.max(viewport.getVisibleBounds().width / scale, interval);
+      // if (viewport.scaled > 0.7) {
+      //   interval = 80;
+      // }
+      // if (viewport.scaled > 1) {
+      //   interval = 40;
+      // }
+      // if (viewport.scaled > 1.3) {
+      //   interval = 20;
+      // }
+      // if (viewport.scaled > 1.6) {
+      //   interval = 10;
+      // }
+      // if (viewport.scaled > 2) {
+      //   interval = 5;
+      // }
+      // let vwidth = viewport.worldWidth;
+      // let vheight = viewport.worldHeight;
+      // if (viewport.getVisibleBounds() != lastscaled) {
+      //   graphics.clear();
+      //
+      //   graphics.lineStyle({
+      //     width: interval / 40,
+      //     color: COLORS.WHITE3,
+      //   });
+      //   let rect = new PIXI.Rectangle(
+      //     viewport.getVisibleBounds().x - interval,
+      //     viewport.getVisibleBounds().y - interval,
+      //     viewport.getVisibleBounds().width + interval,
+      //     viewport.getVisibleBounds().height + interval
+      //   );
+      //   for (let x = 0; x < vwidth; x += interval) {
+      //     for (let y = 0; y < vheight; y += interval) {
+      //       if (rect.contains(x, y)) {
+      //         graphics.drawRect(x, y, interval, interval);
+      //       }
+      //     }
+      //   }
+      //   lastscaled = viewport.getVisibleBounds();
+      // }
       nodes.forEach((n) => {
         n.render();
       });
@@ -194,6 +200,7 @@
     text: PIXI.Text;
     dragging = false;
     description = "";
+    oldname = "";
     constructor(parent: Node | null) {
       this.parent = parent;
 
@@ -300,12 +307,15 @@
       this.root.y = this.position.y;
       this.text.text = this.name;
 
-      this.text.style.fontSize = 25;
-      while (
-        this.text.getLocalBounds().height > 60 &&
-        (this.text.style.fontSize as number) > 2
-      ) {
-        this.text.style.fontSize = (this.text.style.fontSize as number) - 1;
+      if (this.name != this.oldname) {
+        this.text.style.fontSize = 25;
+        while (
+          this.text.getLocalBounds().height > 60 &&
+          (this.text.style.fontSize as number) > 2
+        ) {
+          this.text.style.fontSize = (this.text.style.fontSize as number) - 1;
+        }
+        this.oldname = this.name;
       }
       this.graphics.clear();
 
@@ -319,6 +329,19 @@
         this.graphics.moveTo(n.position.x + noffset, n.position.y + noffset);
         this.graphics.lineTo(toffset, toffset);
       });
+    }
+
+    remove() {
+      let filterer = (r) => r != this;
+      rootnodes = rootnodes.filter(filterer);
+      nodes = nodes.filter(filterer);
+      if (this.parent) {
+        this.parent.children = this.parent.children.filter(filterer);
+      }
+
+      this.root.destroy();
+
+      selectednode = null;
     }
   }
 
@@ -350,7 +373,7 @@
     };
   }
   function deserializeNode(nodedat: SerializedNode, parent: Node | null): Node {
-  console.log(nodedat)
+    console.log(nodedat);
     let node = new Node(parent);
     node.position = nodedat.pos;
     node.description = nodedat.description;
@@ -365,7 +388,6 @@
     }
     return node;
   }
-
 </script>
 
 <main class="dark flex flex-col">
@@ -378,24 +400,31 @@
         </div>
       </div>
       <div class="flex">
-        <div on:click={addNode}>
+        <button on:click={addNode}>
           <FontAwesomeIcon icon={faPlus} size="2x" inverse={true} />
-        </div>
-        <div on:click={save}>
+        </button>
+        <button on:click={save}>
           <FontAwesomeIcon icon={faFloppyDisk} size="2x" inverse={true} />
-        </div>
+        </button>
       </div>
     </div>
-    <div class="flex flex-1">
+    <div class="flex flex-1 relative">
       <div class="flex-1" bind:this={htmlparent} />
       {#if selectednode != null}
-        <div class="darkm2 p-5">
+        <div class="flex-1 darkm2 p-5" id="panel">
           <div class="flex items-center justify-center">
-            <p class="text text-xl">{selectednode.name}</p>
+            <input class="dark text text-xl" bind:value={selectednode.name} />
           </div>
           <Separator />
-          <div contenteditable bind:innerHTML={selectednode.description} />
+          <div
+            class="text text-xl"
+            contenteditable
+            bind:innerHTML={selectednode.description}
+          />
           <Separator />
+          <button on:click={() => selectednode?.remove()}>
+            <FontAwesomeIcon icon={faTrash} size="2x" inverse={true} />
+          </button>
         </div>
       {/if}
     </div>
@@ -412,4 +441,9 @@
 </main>
 
 <style>
+  #panel {
+    position: absolute;
+    right: 0;
+    height: 100%;
+  }
 </style>

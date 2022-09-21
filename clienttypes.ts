@@ -61,6 +61,10 @@ export interface ClientGameCollection {
   name: string;
   description: string;
 }
+
+
+
+
 export interface Board{
   uuid: string;
   title: string;

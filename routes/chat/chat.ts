@@ -14,6 +14,7 @@ import {
 } from "../../clienttypes";
 import webpush from "web-push";
 import * as Chat from "./types";
+import axios from "axios";
 export default {
   path: "chat",
   route: (state: App, user: User, req: Request, res: Response) => {
@@ -29,6 +30,18 @@ export default {
         sendRooms(state, user.uuid, socket);
       },
       require: { chat: {} },
+    },
+    {
+      path: "alive",
+      require: { chat:{}},
+
+      route: async (state: App, user: User, req,socket:Socket) => {
+        let cached = state.usercache.getVal(user.uuid);
+        if (cached){
+          cached[1].online = true; 
+          state.usercache.setVal(user.uuid,socket,cached[1]);
+        }
+      }
     },
     {
       path: "send",
@@ -55,6 +68,11 @@ export default {
               "messages",
               message
             );
+            if (room.webhook){
+              axios.post(room.webhook,{
+                content: user.username + ": " + req.message
+              })
+            }
 
             let clientmsg: ClientChatMessage = Object.assign(
               {},
@@ -244,7 +262,7 @@ export default {
           "users",
           invited.uuid
         );
-        room = await state.db.getOne("Rooms", { uuid: body.user })!;
+        room = await state.db.getOne("Rooms", { uuid: body.room });
         sendRoom(state, room!);
         return null;
       },
@@ -274,12 +292,16 @@ export default {
           removed.uuid
         );
         room = await state.db.getOne("Rooms", { uuid: body.room });
-        sendRoom(state, room!);
-        // sendroom won't send it to the removed user because they aren't in the room anymore
-        let cachedremoved: [Socket | null, CachedUser] | null =
-          state.usercache.getVal(removed.uuid);
-        if (cachedremoved && cachedremoved[0]) {
-          sendRooms(state, removed.uuid, cachedremoved[0]);
+        if (room) {
+          sendRoom(state, room);
+          // sendroom won't send it to the removed user because they aren't in the room anymore
+          let cachedremoved: [Socket | null, CachedUser] | null =
+            state.usercache.getVal(removed.uuid);
+          if (cachedremoved && cachedremoved[0]) {
+            sendRooms(state, removed.uuid, cachedremoved[0]);
+          }
+        } else {
+          console.log("wtf");
         }
         return null;
       },
@@ -323,7 +345,7 @@ export default {
           uuid: body.room,
         });
         if (!room) return error("null room");
-        if (user.uuid == room.owner) return error("insufficient permissions");
+        if (user.uuid != room.owner) return error("insufficient permissions");
         let sanitizedname = xss(body.name).normalize();
         if (sanitizedname == "") return error("bad name");
         await state.db.modifyOne("Rooms", { uuid: room.uuid }, (room) => {
@@ -384,18 +406,22 @@ export default {
           user.uuid
         );
         room = await state.db.getOne("Rooms", { uuid: body.room });
-        if (room!.users.length > 0) {
-          sendRoom(state, room!);
-          // sendroom won't send it to the removed user because they aren't in the room anymore
-          let cachedremoved: [Socket | null, CachedUser] | null =
-            state.usercache.getVal(user.uuid);
-          if (cachedremoved && cachedremoved[0]) {
-            sendRooms(state, user.uuid, cachedremoved[0]);
+        if (room) {
+          if (room.users.length > 0) {
+            sendRoom(state, room);
+            // sendroom won't send it to the removed user because they aren't in the room anymore
+            let cachedremoved: [Socket | null, CachedUser] | null =
+              state.usercache.getVal(user.uuid);
+            if (cachedremoved && cachedremoved[0]) {
+              sendRooms(state, user.uuid, cachedremoved[0]);
+            }
+          } else {
+            await state.db.database.collection("Rooms").deleteOne({
+              uuid: body.room,
+            });
           }
         } else {
-          await state.db.database.collection("Rooms").deleteOne({
-            uuid: body.room,
-          });
+          console.log("??");
         }
         return null;
       },

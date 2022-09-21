@@ -147,7 +147,9 @@
       <iframe allow="fullscreen" id = "frame" class = {`flex-1 aspect-video`} src={selectedgame.link} />
       <div class = "darkm3">
         <p class="text text-center text-2xl">{selectedgame.name}</p>
-        <p class="text">{selectedgame.description}</p>
+        <p class="text">{@html selectedgame.description}</p>
+
+        <p class="text">{@html selectedgame.credits}</p>
       </div>
     </div>
   {/if}

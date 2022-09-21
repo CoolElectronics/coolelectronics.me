@@ -15,6 +15,7 @@ const routes = [
   "404",
   "forbidden",
   "playground",
+  "ftp",
   "sparkboard",
   "schedule"
 ];

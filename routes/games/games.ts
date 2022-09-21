@@ -13,6 +13,14 @@ import xss from "xss";
 import * as Games from "./types";
 import { trace } from "console";
 
+
+const xssOptions = {
+  whiteList:{
+    "div": [],
+    "br": [],
+  }
+}
+
 export default {
   path: "games",
   route: (state: App, req: Request, res: Response) => {
@@ -97,7 +105,7 @@ export default {
         let collection = await state.db.getOne("Games", { uuid: body.uuid });
         if (collection) {
           let sanitizedname = xss(body.name).normalize();
-          let sanitizeddescription = xss(body.description).normalize();
+          let sanitizeddescription = xss(body.description,xssOptions).normalize();
           if (sanitizedname != "") {
             state.db.modifyOne("Games", { uuid: body.uuid }, (col) => {
               col.name = sanitizedname;
@@ -129,8 +137,8 @@ export default {
         });
         if (collection) {
           let sanitizedname = xss(body.name).normalize();
-          let sanitizeddescription = xss(body.description).normalize();
-          let sanitizedcredits = xss(body.credits).normalize();
+          let sanitizeddescription = xss(body.description,xssOptions).normalize();
+          let sanitizedcredits = xss(body.credits,xssOptions).normalize();
           if (sanitizedname != "") {
             let game: ClientGame = {
               uuid: randomUUID(),
@@ -172,8 +180,8 @@ export default {
         });
         if (collection) {
           let sanitizedname = xss(body.name).normalize();
-          let sanitizeddescription = xss(body.description).normalize();
-          let sanitizedcredits = xss(body.credits);
+          let sanitizeddescription = xss(body.description,xssOptions).normalize();
+          let sanitizedcredits = xss(body.credits,xssOptions);
           if (sanitizedname != "") {
             await state.db.modifyOne(
               "Games",

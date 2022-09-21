@@ -1,7 +1,7 @@
 import express, { Application, IRoute, Request, Response } from "express";
 import { API, Error, RequestType } from "./clienttypes";
 
-import indexRoute, { socketConnect } from "./routes/index";
+import indexRoute, { socketConnect } from "./routes/index/index";
 import signRoute from "./routes/sign/sign";
 import homeRoute from "./routes/home/home";
 import chatRoute from "./routes/chat/chat";
@@ -38,7 +38,6 @@ export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
 
 app.set("trust proxy", "loopback");
 
-
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -57,7 +56,7 @@ try {
     process.env.PUSH_PUB!,
     process.env.PUSH_PRIV!
   );
-} catch { }
+} catch {}
 
 global.rootDir = path.resolve(__dirname);
 
@@ -99,12 +98,12 @@ global.rootDir = path.resolve(__dirname);
     if (misc.visitedips.includes(req.ip)) {
       res.send(
         "hey! you've already been here. if you were here to see what the current count is, its " +
-        misc.biocounter
+          misc.biocounter
       );
     } else {
       res.send(
         "thanks for helping me answer my question. if you were wondering, the answer is " +
-        misc.biocounter
+          misc.biocounter
       );
       state.db.modifyOne("Misc", {}, (m) => {
         m.visitedips.push(req.ip);
@@ -114,17 +113,26 @@ global.rootDir = path.resolve(__dirname);
   });
 
   routes.forEach((route) => {
-    app.get("/" + route.path, (req, res, next) => {
-      if (route.require) {
-        state.db.Validate(
-          req.cookies,
-          route.require,
-          (user) => route.route(state, user, req, res, next),
-          () => res.redirect("/sign"),
-          () => res.sendFile(__dirname + "/dist/src/forbidden/forbidden.html")
-        );
+    console.log(Object.keys(route));
+    app.get("/" + route.path, (req: Request, res, next) => {
+    console.log(req.headers["user-agent"]);
+      if (
+        (req.headers["user-agent"]?.toLowerCase().includes("bot") ||
+        req.headers["user-agent"]?.toLowerCase().includes("curl")) && route.seopage
+      ) {
+        res.send(route.seopage);
       } else {
-        route.route(state, req, res, next);
+        if (route.require) {
+          state.db.Validate(
+            req.cookies,
+            route.require,
+            (user) => route.route(state, user, req, res, next),
+            () => res.redirect("/sign"),
+            () => res.sendFile(__dirname + "/dist/src/forbidden/forbidden.html")
+          );
+        } else {
+          route.route(state, req, res, next);
+        }
       }
     });
     route.api.forEach((endpoint) => {
@@ -153,9 +161,9 @@ global.rootDir = path.resolve(__dirname);
                   res.send({ error: "invalid schema" });
                   console.log(
                     "bad schema. wanted " +
-                    endpoint.api.request +
-                    " got " +
-                    req.body
+                      endpoint.api.request +
+                      " got " +
+                      req.body
                   );
                 }
               } else {
@@ -223,6 +231,7 @@ interface Route {
   listeners: SocketEndpoint[];
   api: ApiEndpoint[];
   require?: object | null;
+  seopage?: string;
 }
 
 export interface SocketEndpoint {
@@ -314,6 +323,6 @@ class AppCache<K, V, C> {
     delete this.umap[id];
   }
 }
-export function error(err:string): Error{
-  return {error: err, trace: new Error().stack!}
+export function error(err: string): Error {
+  return { error: err, trace: new Error().stack! };
 }

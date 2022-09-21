@@ -118,7 +118,7 @@
   });
 
   socket.emit("chat:connected");
-
+  setInterval(()=>socket.emit("chat:alive"),5000);
   function sendmessage() {
     if (selectedroom.kind == "room") {
       socket.emit("chat:send", {

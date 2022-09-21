@@ -82,17 +82,7 @@ export default {
       ): Promise<Account.RequestFriendResponse | Error> => {
         // not the cleanest. the friends system could have definitely been done better.
         //
-        let alreadyexists = false;
-        let allreqs = await state.db.getAll<FriendRequest>("FriendRequests");
-        for (let req of allreqs) {
-          if (
-            (req.to == user.uuid || req.from == user.uuid) &&
-            (req.to == body.uuid || req.from == body.uuid)
-          ) {
-            alreadyexists = true;
-          }
-        }
-        if (!user.friends.includes(body.uuid) && !alreadyexists) {
+        if (!user.friends.includes(body.uuid)) {
           state.db.addOne("FriendRequests", {
             uuid: randomUUID(),
             from: user.uuid,
@@ -171,23 +161,27 @@ export default {
           }
         );
         if (!request || request.to != user?.uuid) return error("null request");
-        if (body.accept) {
-          // idk sometimes express makes it a string
-          await state.db.appendToList(
-            "Users",
-            { uuid: request.to },
-            "friends",
-            request.from
-          );
-          await state.db.appendToList(
-            "Users",
-            { uuid: request.from },
-            "friends",
-            request.to
-          );
-          // also send a notif or 2
+        if (user.friends.includes(request.to)) {
+          return error("already friends");
         } else {
-          // send denied notif
+          if (body.accept) {
+            // idk sometimes express makes it a string
+            await state.db.appendToList(
+              "Users",
+              { uuid: request.to },
+              "friends",
+              request.from
+            );
+            await state.db.appendToList(
+              "Users",
+              { uuid: request.from },
+              "friends",
+              request.to
+            );
+            // also send a notif or 2
+          } else {
+            // send denied notif
+          }
         }
         await state.db.database.collection("FriendRequests").deleteOne({
           uuid: body.uuid,
@@ -249,5 +243,17 @@ export default {
       require: {},
     },
   ],
+  seopage:`
+    <html>
+      <head>
+        <title>CoolElectronics.me | Account Settings</title>
+        <meta name = "description" content = "Manage your coolelectronics.me account, add a profile picture, turn off notifications, etc">
+      </head>
+      <body>
+        <a href = "/"></a>
+        <h1>Account Settings Page</h1>
+      </body>
+    </html>
+  `,
   listeners: [],
 };

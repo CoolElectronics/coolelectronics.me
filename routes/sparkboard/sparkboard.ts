@@ -77,4 +77,22 @@ export default {
       }
     }
   ],
+  seopage:`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CoolElectronics.me | Sparkboard</title>
+        <meta name = "description" content = "Sparkboard. A free program for brainstorming and storing ideas">
+      </head>
+      <body>
+        <a href = "/"></a>
+        <h1>Sparkboard</h1>
+        <p>
+          
+        </p>
+      </body>
+    </html>
+  `,
 };

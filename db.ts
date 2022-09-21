@@ -7,6 +7,7 @@ import { ClientUser, ClientUserSettings } from "./clienttypes";
 import { App, CachedUser } from "./main";
 import { Socket } from "socket.io";
 import { PushSubscription } from "web-push";
+import { File } from "./routes/ftp/ftp";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
@@ -23,6 +24,7 @@ export async function connect(): Promise<Database> {
     "FriendRequests",
     "Misc"
   ]);
+  await database.updateUserSchemas();
   return database;
 }
 export class Database {
@@ -42,6 +44,12 @@ export class Database {
         });
       }
     });
+  }
+  async updateUserSchemas(){
+    let users = await this.getAll("Users");
+    for (let user of users){
+      updateUserSchema(user,this);
+    }
   }
   async appendToList(
     collection: string,
@@ -115,13 +123,11 @@ export class Database {
   async getUser(id: string): Promise<User | null> {
     let user = await this.getOne<User>("Users", { uuid: id });
 
-    updateUserSchema(user,this);
     return user;
   }
 
   async getUserByName(username: string): Promise<User | null> {
     let user = await this.getOne<User>("Users", { username });
-    updateUserSchema(user,this);
     return user;
   }
   async addUser(username: string, hash: string) {
@@ -210,7 +216,7 @@ export interface User {
   settings: ClientUserSettings;
   pushsubscription: PushSubscription | null;
   boards: string[];
-  files: string[];
+  files: File[];
   version: number;
 }
 export interface Room {
@@ -220,6 +226,7 @@ export interface Room {
   users: string[];
   messages: ChatMessage[];
   public: boolean;
+  webhook?:string;
 }
 export interface ChatMessage {
   uuid: string;
@@ -233,6 +240,7 @@ export interface FriendRequest {
   from: string;
   to: string;
 }
+
 function constructUser(username: string, hash: string): User {
   return {
     uuid: randomUUID(),

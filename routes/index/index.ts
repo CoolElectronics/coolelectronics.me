@@ -85,6 +85,30 @@ export default {
       },
     },
   ],
+  seopage:`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CoolElectronics.me</title>
+        <meta name = "description" content = "Hello, I'm CoolElectronics, this is my website">
+      </head>
+      <body>
+        <a href = "/"></a>
+        <a href = "/games"></a>
+        <a href = "/sparkboard"></a>
+        <a href = "/chat"></a>
+        <a href = "/ftp"></a>
+        <h1>CoolElectronics.me</h1>
+        <p>
+            This is coolelectronics.me, a website originally started to get
+            around filters by my school district but now hosts a whole bunch of
+            projects with varying usefullness
+        </p>
+      </body>
+    </html>
+  `,
 };
 async function userStatusUpdate(state: App, userid: string) {
   let rooms = await state.db.getAll<Room>("Rooms");
