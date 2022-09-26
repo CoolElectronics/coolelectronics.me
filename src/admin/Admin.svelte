@@ -31,6 +31,30 @@
     let res = await jq.post("/api/admin/startmc");
     alert(res);
   }
+  async function startx() {
+    let res = await jq.post("/api/admin/startx");
+    alert(res);
+  }
+  async function startnovnc() {
+    let port = prompt("port?");
+    let res = await jq.post("/api/admin/novnc",{
+      port
+    });
+    alert(res);
+  }
+  async function killnovnc() {
+    let res = await jq.post("/api/admin/killnovnc",
+    );
+    alert(res);
+  }
+
+
+
+  async function startx11vnc() {
+    let res = await jq.post("/api/admin/startx11vnc");
+    alert(res);
+  }
+
 
   async function runcmd() {
     let res = await jq.post("/api/admin/ssh", {
@@ -62,9 +86,16 @@
   <div id="tabcontainer">
     {#if selectedtab == "personal"}
       <SelectButton text={"Execute Powerwake"} click={powerwake} />
+      <SelectButton text={"Start X Server"} click={startx} />
       <SelectButton text={"Start CRD Daemon"} click={startcrd} />
+
+      <SelectButton text={"Start Novnc Server"} click={startnovnc} />
+      <SelectButton text={"Start X11VncServer"} click={startx11vnc} />
+      <SelectButton text={"Terminate Novnc Server"} click={killnovnc} />
+
       <SelectButton text={"Terminate CRD Daemon"} click={stopcrd} />
       <SelectButton text={"Start MC Server"} click={startmc} />
+
       <SelectButton text={"Launch Steam Link"} click={() => alert("later")} />
       <SelectButton text={"Restart Server"} click={() => alert("later")} />
     {:else if selectedtab == "users"}

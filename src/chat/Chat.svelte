@@ -118,7 +118,7 @@
   });
 
   socket.emit("chat:connected");
-  setInterval(()=>socket.emit("chat:alive"),5000);
+  setInterval(() => socket.emit("chat:alive"), 5000);
   function sendmessage() {
     if (selectedroom.kind == "room") {
       socket.emit("chat:send", {
@@ -405,7 +405,7 @@
     display: grid;
     grid-template-areas: "bar list" "body list" "box list";
     grid-template-columns: 85fr 15fr;
-    grid-template-rows: max-content auto max-content;
+    /* grid-template-rows: max-content auto max-content; */
     overflow-y: scroll;
   }
   #contents-actions {
@@ -427,6 +427,8 @@
     grid-area: list;
 
     border-left: 4px solid var(--dark);
+    overflow-y: scroll;
+    overflow-x: hidden;
   }
   #room-box {
     /* border-top: 4px solid var(--dark); */

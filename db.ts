@@ -217,6 +217,7 @@ export interface User {
   pushsubscription: PushSubscription | null;
   boards: string[];
   files: File[];
+  discordId?:string;
   version: number;
 }
 export interface Room {
@@ -226,7 +227,7 @@ export interface Room {
   users: string[];
   messages: ChatMessage[];
   public: boolean;
-  webhook?:string;
+  channel?:string;
 }
 export interface ChatMessage {
   uuid: string;

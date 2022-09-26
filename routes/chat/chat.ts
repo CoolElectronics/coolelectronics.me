@@ -1,4 +1,5 @@
 import { ChatMessage, constructClientUser, Room, User } from "../../db";
+import * as Bridge from "../../bridge/bot";
 import express, { Request, Response } from "express";
 import { Socket } from "socket.io";
 import { App, CachedUser, error, parse } from "../../main";
@@ -33,88 +34,27 @@ export default {
     },
     {
       path: "alive",
-      require: { chat:{}},
+      require: { chat: {} },
 
-      route: async (state: App, user: User, req,socket:Socket) => {
+      route: async (state: App, user: User, req, socket: Socket) => {
         let cached = state.usercache.getVal(user.uuid);
-        if (cached){
-          cached[1].online = true; 
-          state.usercache.setVal(user.uuid,socket,cached[1]);
+        if (cached) {
+          cached[1].online = true;
+          state.usercache.setVal(user.uuid, socket, cached[1]);
         }
-      }
+      },
     },
     {
       path: "send",
       route: async (state: App, user: User, req) => {
+        let sanitized = xss(req.message).normalize();
+        if (sanitized == "") return;
         let room: Room | null = await state.db.getOne("Rooms", {
           uuid: req.id,
         });
-        if (room != null && room.users.includes(user.uuid)) {
-          // console.log("sen")
-          // i check null right here
-          let sanitized = xss(req.message).normalize();
-          if (sanitized != "") {
-            let message: ChatMessage = {
-              sender: user.uuid,
-              uuid: randomUUID(),
-              message: sanitized,
-              timestamp: new Date(),
-            };
-            state.db.appendToList(
-              "Rooms",
-              {
-                uuid: req.id,
-              },
-              "messages",
-              message
-            );
-            if (room.webhook){
-              axios.post(room.webhook,{
-                content: user.username + ": " + req.message
-              })
-            }
-
-            let clientmsg: ClientChatMessage = Object.assign(
-              {},
-              message
-            ) as ClientChatMessage;
-            clientmsg.sendername = user.username;
-
-            for (let userid of room.users) {
-              let cached: [Socket | null, CachedUser] | null =
-                state.usercache.getVal(userid);
-              if (cached && cached[0]) {
-                cached[0].emit("chat:newmessage", {
-                  msg: clientmsg,
-                  room: room.uuid,
-                });
-              } else {
-                let usrinroom: User = (await state.db.getUser(userid)) as User;
-                if (usrinroom.pushsubscription) {
-                  webpush
-                    .sendNotification(
-                      usrinroom.pushsubscription,
-                      JSON.stringify({
-                        title: user.username,
-                        body: message.message,
-                      })
-                    )
-                    .catch(() => {
-                      console.log("unsubscription or error when pushing");
-                      state.db.modifyOneProp(
-                        "Users",
-                        { uuid: user.uuid },
-                        "pushsubscription",
-                        () => null
-                      );
-                    });
-                } else {
-                  console.log("no worker :sad:");
-                }
-              }
-            }
-          }
-        }
+        if (!room) return;
+        Bridge.message(state, user, room, req.message);
+        sendMessage(state, user, room, sanitized);
       },
       require: {
         chat: {},
@@ -428,6 +368,74 @@ export default {
     },
   ],
 };
+
+export async function sendMessage(
+  state: App,
+  user: User,
+  room: Room,
+  messagecontent: string
+) {
+  if (!room.users.includes(user.uuid)) return;
+  let message: ChatMessage = {
+    sender: user.uuid,
+    uuid: randomUUID(),
+    message: messagecontent,
+    timestamp: new Date(),
+  };
+  state.db.appendToList(
+    "Rooms",
+    {
+      uuid: room.uuid,
+    },
+    "messages",
+    message
+  );
+  // if (room.webhook){
+  //   axios.post(room.webhook,{
+  //     content: user.username + ": " + messagecontent;
+  //   })
+  // }
+
+  let clientmsg: ClientChatMessage = Object.assign(
+    {},
+    message
+  ) as ClientChatMessage;
+  clientmsg.sendername = user.username;
+
+  for (let userid of room.users) {
+    let cached: [Socket | null, CachedUser] | null =
+      state.usercache.getVal(userid);
+    if (cached && cached[0]) {
+      cached[0].emit("chat:newmessage", {
+        msg: clientmsg,
+        room: room.uuid,
+      });
+    } else {
+      let usrinroom: User = (await state.db.getUser(userid)) as User;
+      if (usrinroom.pushsubscription) {
+        webpush
+          .sendNotification(
+            usrinroom.pushsubscription,
+            JSON.stringify({
+              title: user.username,
+              body: message.message,
+            })
+          )
+          .catch(() => {
+            console.log("unsubscription or error when pushing");
+            state.db.modifyOneProp(
+              "Users",
+              { uuid: user.uuid },
+              "pushsubscription",
+              () => null
+            );
+          });
+      } else {
+        console.log("no worker :sad:");
+      }
+    }
+  }
+}
 async function joinRoom(state: App, user: User, room: Room) {
   if (!room.users.includes(user.uuid)) {
     await state.db.appendToList(

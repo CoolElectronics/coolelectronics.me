@@ -13,6 +13,8 @@ import playgroundRoute from "./routes/playground/playground";
 import sparkboardRoute from "./routes/sparkboard/sparkboard";
 import scheduleRoute from "./routes/schedule/schedule";
 
+import * as Bridge from "./bridge/bot";
+
 import { connect, Database, User } from "./db";
 
 import cors from "cors";
@@ -204,12 +206,14 @@ global.rootDir = path.resolve(__dirname);
       });
     });
   });
+
   app.use((req, res) => {
     res.status(404).sendFile(__dirname + "/dist/src/404/404.html");
   });
   httpServer.listen(port, () =>
     console.log(`Example app is listening on port ${port}.`)
   );
+  Bridge.start(state,process.env.BOT_SECRET!,process.env.BOT_ID!);
 })();
 
 function parseBody(body: object, schema: object): object | null {

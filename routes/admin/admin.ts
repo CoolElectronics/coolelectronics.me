@@ -32,11 +32,79 @@ export default {
       },
     },
     {
+      path:"/test",
+      type:RequestType.GET,
+      route: (state:App,user,req,res)=>{
+        res.send(200);
+      }
+    },
+    {
       path: "/startcrd",
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         try {
-          let result = await axios.post(process.env.HOST_IP + "/api/crd");
+          // let result = await axios.post(process.env.HOST_IP + "/api/crd");
+          // res.send(result.data);
+          res.send(200);
+        } catch (e: any) {
+          res.send(e.stack);
+        }
+      },
+      require: {
+        Administrator: true,
+      },
+    },{
+      path: "/novnc",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try {
+          let result = await axios.post(process.env.HOST_IP + "/api/novnc",{
+            port:req.body.port
+          });
+          res.send(result.data);
+        } catch (e: any) {
+          res.send(e.stack);
+        }
+      },
+      require: {
+        Administrator: true,
+      },
+    },
+    {
+      path: "/startx11vnc",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try {
+          let result = await axios.post(process.env.HOST_IP + "/api/startx11vnc");
+          res.send(result.data);
+        } catch (e: any) {
+          res.send(e.stack);
+        }
+      },
+      require: {
+        Administrator: true,
+      },
+    },
+    {
+      path: "/startx",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try {
+          let result = await axios.post(process.env.HOST_IP + "/api/startx");
+          res.send(result.data);
+        } catch (e: any) {
+          res.send(e.stack);
+        }
+      },
+      require: {
+        Administrator: true,
+      },
+    },{
+      path: "/killnovnc",
+      type: RequestType.POST,
+      route: async (state: App, user: User, req: Request, res: Response) => {
+        try {
+          let result = await axios.post(process.env.HOST_IP + "/api/killnovnc");
           res.send(result.data);
         } catch (e: any) {
           res.send(e.stack);
@@ -51,7 +119,7 @@ export default {
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         try {
-          let result = await axios.post(process.env.HOST_IP + "/api/stopcrd");
+          let result = await axios.post(process.env.HOST_IP + "/api/startx");
           res.send(result.data);
         } catch (e: any) {
           res.send(e.stack);
