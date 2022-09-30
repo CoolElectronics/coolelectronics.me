@@ -17,7 +17,8 @@ const routes = [
   "playground",
   "ftp",
   "sparkboard",
-  "schedule"
+  "schedule",
+  "money"
 ];
 let input = { main: resolve(root, "index.html") };
 for (let route of routes) {

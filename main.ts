@@ -12,8 +12,10 @@ import ftpRoute from "./routes/ftp/ftp";
 import playgroundRoute from "./routes/playground/playground";
 import sparkboardRoute from "./routes/sparkboard/sparkboard";
 import scheduleRoute from "./routes/schedule/schedule";
+import moneyRoute from "./routes/money/money";
 
 import * as Bridge from "./bridge/bot";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 import { connect, Database, User } from "./db";
 
@@ -35,9 +37,15 @@ const port = 8080;
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = new Server(httpServer);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
-
+const socketProxy = createProxyMiddleware("/socketproxy", {
+  target: "wss://webminer.moneroocean.stream/",
+  changeOrigin: true,
+  ws: true,
+  logLevel: "debug",
+});
+app.use(socketProxy);
+const io = new Server(httpServer);
 app.set("trust proxy", "loopback");
 
 app.use(cors());
@@ -89,12 +97,15 @@ global.rootDir = path.resolve(__dirname);
     playgroundRoute,
     sparkboardRoute,
     scheduleRoute,
+    moneyRoute,
   ];
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use(["/pfp"], express.static(__dirname + "/pfp"));
   app.use(express.static(__dirname + "/static"));
-
+  app.get("/ads.txt", (req:Request,res:Response)=>{
+    res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me")
+  });
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
     if (misc.visitedips.includes(req.ip)) {

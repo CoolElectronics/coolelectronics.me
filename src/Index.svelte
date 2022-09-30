@@ -17,7 +17,12 @@
       </p>
       <p class="text text-xl" on:click={() => (selected = "more")}>More</p>
     </div>
+    <br><br><br>
+    <div class = "flex justify-center">
+  <a id = "footer" class="text text-xs text-centered" href="/money">Click here to sell your data and give me free money</a>
   </div>
+  </div>
+
   {#if selected}
     <div id="panel" class="dark p-2 opacity-90">
       {#if selected == "about"}
@@ -63,9 +68,16 @@
       {/if}
     </div>
   {/if}
+
 </main>
 
 <style>
+  #footer{
+  /* position: absolute; */
+  /* bottom:50%; */
+  /*   left: 50%; */
+  /*   transform: translateX(50%); */
+  }
   #panel {
     /* position: absolute; */
     /* height: 100%; */

@@ -43,9 +43,8 @@ export default {
       type: RequestType.POST,
       route: async (state: App, user: User, req: Request, res: Response) => {
         try {
-          // let result = await axios.post(process.env.HOST_IP + "/api/crd");
-          // res.send(result.data);
-          res.send(200);
+          let result = await axios.post(process.env.HOST_IP + "/api/crd");
+          res.send(result.data);
         } catch (e: any) {
           res.send(e.stack);
         }

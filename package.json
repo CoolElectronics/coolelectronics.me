@@ -48,6 +48,7 @@
     "fontawesome-svelte": "^2.0.1",
     "formidable": "^2.0.1",
     "http": "^0.0.1-security",
+    "http-proxy-middleware": "^2.0.6",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.8.1",

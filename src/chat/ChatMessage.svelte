@@ -2,22 +2,77 @@
   import { ClientChatMessage, ClientSelf } from "../../clienttypes";
   import Pfp from "../components/Pfp.svelte";
   import ta from "time-ago";
-import { onMount } from "svelte/internal";
+  import { onMount } from "svelte/internal";
 
-  export let self:ClientSelf;
+  export let self: ClientSelf;
   export let message: ClientChatMessage;
   export let prev: ClientChatMessage | null;
 
-  export let clickpfp:Function;
+  export let clickpfp: Function;
   export let classes = "";
-  
-  let msgelement:HTMLDivElement;
+
+  const urlregex =
+    /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
+
+  let msgelement: HTMLDivElement;
   let minimized = false;
-  onMount(()=>{
+
+  let formattedmsg: string;
+  $: format(message.message).then((_) => (formattedmsg = _));
+
+  async function format(message: string) {
+    let buf = "";
+    for (let part of message.split(" ")) {
+      if (urlregex.test(part)) {
+        buf += await formatURL(part);
+        console.log(await formatURL(part));
+      } else {
+        buf += part;
+      }
+      buf += " ";
+    }
+    return buf;
+  }
+  async function formatURL(url) {
+    let imgurl = `<div style = "overflow:hidden;height:200px" >
+                    <img class = "scaledown" src = "${url}"/>
+                  </div>`;
+    let videourl = `<div style = "overflow:hidden;height:200px" >
+                    <video controls class = "scaledown">
+                      <source src = "${url}">
+                    </video>
+                  </div>`
+    if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) return imgurl;
+    if (url.match(/\.(webm|mp4|ogg)$/) != null) return videourl;
+    try{
+    let res = await fetch(url);
+    // leaks user ips
+    if (res.status === 200) {
+      switch (res.headers.get("Content-Type")) {
+        case "image/png":
+        case "image/jpg":
+        case "image/jpeg":
+          return imgurl; 
+        case "video/mp4":
+        case "video/webm":
+        case "video/ogg":
+          return videourl;
+      }
+    }
+    }catch{}
+          return `<a style = "color:blue" href = ${url}>${url}</a>`;
+  }
+  onMount(() => {
     msgelement.scrollIntoView();
-  })
-  if (prev){
-    let minutesbetween = Math.floor(Date.parse(message.timestamp as unknown as string) - Date.parse(prev.timestamp as unknown as string)) / 1000 / 60;
+  });
+  if (prev) {
+    let minutesbetween =
+      Math.floor(
+        Date.parse(message.timestamp as unknown as string) -
+          Date.parse(prev.timestamp as unknown as string)
+      ) /
+      1000 /
+      60;
     let own = prev.sender == message.sender;
     minimized = minutesbetween < 5 && own;
   }
@@ -25,12 +80,12 @@ import { onMount } from "svelte/internal";
 
 {#if !minimized}
   <div class={"message " + classes} bind:this={msgelement}>
-    <button on:click = {(e)=> clickpfp(e,message.sender)}>
-    <Pfp
-      classes="inline-block pfp mr-5"
-      size="small"
-      name={message.sendername}
-    />
+    <button on:click={(e) => clickpfp(e, message.sender)}>
+      <Pfp
+        classes="inline-block pfp mr-5"
+        size="small"
+        name={message.sendername}
+      />
     </button>
     <div class="-contents ml-2.5">
       <div class="flex items-center">
@@ -39,22 +94,25 @@ import { onMount } from "svelte/internal";
       </div>
       <div class="flex -contents">
         <p class="text text-sm">
-          {@html message.message}
+          {@html formattedmsg}
         </p>
       </div>
     </div>
     <div class="filler" />
   </div>
 {:else}
-  <div class = "minimized flex" bind:this={msgelement}>
-    <div class = "pfp-filler"></div>
-    <div class = "ml-2.5 text text-sm">
-      {@html message.message}
+  <div class="minimized flex" bind:this={msgelement}>
+    <div class="pfp-filler" />
+    <div class="ml-2.5 text text-sm">
+      {@html formattedmsg}
     </div>
   </div>
 {/if}
 
 <style>
+  :global(.scaledown) {
+    height: 100%;
+  }
   .message {
     background-color: var(--darkm3);
     margin: 10px;
@@ -68,8 +126,8 @@ import { onMount } from "svelte/internal";
   .filler {
     grid-area: filler;
   }
-  .pfp-filler{
-  width: 50px;
+  .pfp-filler {
+    width: 50px;
   }
   .-contents {
     grid-area: contents;
