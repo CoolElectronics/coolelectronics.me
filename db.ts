@@ -273,11 +273,20 @@ export async function constructClientUser(
     };
   } else {
     let user = await state.db.getUser(uuid);
+    if (user){
     return {
-      name: user!.username,
+      name: user.username,
       online: false,
       uuid,
     };
+  }else{
+      console.error(uuid);
+      return {
+        name: "wtf",
+        online:false,
+        uuid,
+      };
+  }
   }
 }
 export interface UserPayload {

@@ -40,10 +40,10 @@ export async function start(state:App,token: string, id: string) {
 
   client.on("messageCreate", async (message: Message) => {
     if (message.author.bot) return;
+    if (message.channelId == lastmessage?.message.channelId) lastmessage = null;
     const room = await state.db.getOne<Room>("Rooms",{channel:message.channelId});
     const user= await state.db.getOne<User>("Users",{discordId:message.author.id});
     if (!room || !user) {
-      console.log("asdjsd");
       return
     };
     sendMessage(state,user,room,message.content);
@@ -53,7 +53,7 @@ export async function start(state:App,token: string, id: string) {
   client.login(token);
 }
 //edit message if possible
-var lastmessage: { sender: string; timestamp: Date; message: Message };
+var lastmessage: { sender: string; timestamp: Date; message: Message } | null;
 export async function message(
   state: App,
   user: User,
@@ -84,7 +84,7 @@ export async function message(
       1000 /
       60 <
       5 &&
-    lastmessage.sender == user.uuid && lastmessage.message.channelId == channel.id
+    lastmessage?.sender == user.uuid && lastmessage.message.channelId == channel.id
   ) {
     embed.setDescription(lastmessage.message.embeds[0].description + "\n" + desc);
     lastmessage = {

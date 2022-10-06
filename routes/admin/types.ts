@@ -22,3 +22,24 @@ export const SetUserPermissions = {
     permissions:{},
   }
 }
+
+export interface StartDevSeverRequest{
+  port: number,
+  require: number, // 0 = anyone, 1 = trusted, 2 = admin
+}
+export const StartDevServer = {
+  type: RequestType.POST,
+  path: "startdev",
+  route: "admin",
+  request: {
+    port: 8080,
+    require: 0,
+  }
+}
+export const StopDevServer = {
+  type: RequestType.POST,
+  path: "stopdev",
+  route: "admin",
+  request: {
+  }
+}

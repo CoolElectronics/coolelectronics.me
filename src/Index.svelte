@@ -53,6 +53,12 @@
         <Card url="https://github.com/CoolElectronics/zsp" title="ZSP">
           A small interpreted programming language made in rust
         </Card>
+        <Card url = "https://github.com/CoolElectronics/bookmarkfs" title = "BookmarkFS">
+          Store files as Chrome bookmarks that sync between devices
+        </Card>
+        <Card url = "https://github.com/CoolElectronics/CoolElectronics.me" title = "This Website">
+          It's on github! yay.
+        </Card>
       {:else if selected == "more"}
         <div class="">
           <Card url="/games" title="Games Repository">
@@ -80,7 +86,7 @@
   }
   #panel {
     /* position: absolute; */
-    /* height: 100%; */
+    /* height:m 100%; */
     /* right:0; */
     /* top:0; */
     max-width: 30%;

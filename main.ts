@@ -6,7 +6,7 @@ import signRoute from "./routes/sign/sign";
 import homeRoute from "./routes/home/home";
 import chatRoute from "./routes/chat/chat";
 import accountRoute from "./routes/account/account";
-import adminRoute from "./routes/admin/admin";
+import adminRoute, { getDevProxy } from "./routes/admin/admin";
 import gamesRoute from "./routes/games/games";
 import ftpRoute from "./routes/ftp/ftp";
 import playgroundRoute from "./routes/playground/playground";
@@ -15,7 +15,7 @@ import scheduleRoute from "./routes/schedule/schedule";
 import moneyRoute from "./routes/money/money";
 
 import * as Bridge from "./bridge/bot";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import proxy, { createProxyMiddleware } from "http-proxy-middleware";
 
 import { connect, Database, User } from "./db";
 
@@ -34,26 +34,42 @@ import fileUpload from "express-fileupload";
 import webpush from "web-push";
 
 const port = 8080;
+const codePort = 7000;
+const vncPort = 6969;
+const cryptoPort = 7070;
+const devPort = 8001;
 
 const app = express();
+const codeApp = express();
+const vncApp = express();
+const cryptoApp = express();
+const devApp = express();
 const httpServer = http.createServer(app);
+const codeServer = http.createServer(codeApp);
+const vncServer = http.createServer(vncApp);
+const cryptoServer = http.createServer(cryptoApp);
+const devServer = http.createServer(devApp);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
-const socketProxy = createProxyMiddleware("/socketproxy", {
-  target: "wss://webminer.moneroocean.stream/",
-  changeOrigin: true,
-  ws: true,
-  logLevel: "debug",
-});
-app.use(socketProxy);
+// const socketProxy = createProxyMiddleware("/socketproxy", {
+//   target: "wss://webminer.moneroocean.stream/",
+//   changeOrigin: true,
+//   ws: true,
+//   logLevel: "debug",
+// });
+// app.use(socketProxy);
+
 const io = new Server(httpServer);
 app.set("trust proxy", "loopback");
 
 app.use(cors());
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
+codeApp.use(cookieParser());
+vncApp.use(cookieParser());
+devApp.use(cookieParser());
+
 app.use(
   fileUpload({
     createParentPath: true,
@@ -76,6 +92,55 @@ global.rootDir = path.resolve(__dirname);
     io,
     usercache: new AppCache<string, Socket | null, CachedUser>(),
   };
+
+  let adminOnlyPlugin = (proxyServer, options) => {
+    proxyServer.on(
+      "proxyReq",
+      async (proxyReq, req: Request, res: Response, next) => {
+        state.db.Validate(
+          req.cookies,
+          { Administrator: true },
+          () => {},
+          () => res.send("forbidden")
+        );
+      }
+    );
+  };
+  // app.use((req:Request,res:Response,next)=>{
+  //   if (req.path.includes("74b1f979648cc44d385a2286793c226e611f59e7") && !req.path.includes("/vscode/")){
+  //     res.redirect("/vscode"+req.path);
+  //   }else{
+  //     next();
+  //   }
+  // })
+  codeApp.use(
+    "/",
+    createProxyMiddleware({
+      target: "http://10.0.1.65:7999",
+      autoRewrite: true,
+      changeOrigin: true,
+      ws: true,
+      plugins: [adminOnlyPlugin],
+    })
+  );
+  vncApp.use(
+    "/",
+    createProxyMiddleware({
+      target: "http://10.0.1.65:6082",
+      ws: true,
+      plugins: [adminOnlyPlugin],
+    })
+  );
+  cryptoApp.use(
+    createProxyMiddleware({
+      target: "wss://webminer.moneroocean.stream",
+      changeOrigin: true,
+      ws: true,
+    })
+  );
+  devApp.use(getDevProxy);
+
+  app.use(bodyParser.json());
   let allusers = await state.db.getAll<User>("Users");
   for (let user of allusers) {
     state.usercache.addItem(user.uuid, null, {
@@ -103,8 +168,8 @@ global.rootDir = path.resolve(__dirname);
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use(["/pfp"], express.static(__dirname + "/pfp"));
   app.use(express.static(__dirname + "/static"));
-  app.get("/ads.txt", (req:Request,res:Response)=>{
-    res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me")
+  app.get("/ads.txt", (req: Request, res: Response) => {
+    res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me");
   });
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
@@ -128,10 +193,10 @@ global.rootDir = path.resolve(__dirname);
   routes.forEach((route) => {
     console.log(Object.keys(route));
     app.get("/" + route.path, (req: Request, res, next) => {
-    console.log(req.headers["user-agent"]);
       if (
         (req.headers["user-agent"]?.toLowerCase().includes("bot") ||
-        req.headers["user-agent"]?.toLowerCase().includes("curl")) && route.seopage
+          req.headers["user-agent"]?.toLowerCase().includes("curl")) &&
+        route.seopage
       ) {
         res.send(route.seopage);
       } else {
@@ -221,10 +286,12 @@ global.rootDir = path.resolve(__dirname);
   app.use((req, res) => {
     res.status(404).sendFile(__dirname + "/dist/src/404/404.html");
   });
-  httpServer.listen(port, () =>
-    console.log(`Example app is listening on port ${port}.`)
-  );
-  Bridge.start(state,process.env.BOT_SECRET!,process.env.BOT_ID!);
+  httpServer.listen(port, () => console.log(`app : ${port}.`));
+  codeServer.listen(codePort, () => console.log(`code server : ${codePort}.`));
+  vncServer.listen(vncPort, () => console.log(`vnc server : ${vncPort}.`));
+  cryptoServer.listen(cryptoPort, () => console.log(`crypto proxy : ${cryptoPort}`));
+  devServer.listen(devPort, () => console.log(`dev proxy: ${devPort}`));
+  Bridge.start(state, process.env.BOT_SECRET!, process.env.BOT_ID!);
 })();
 
 function parseBody(body: object, schema: object): object | null {

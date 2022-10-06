@@ -47,6 +47,14 @@
     );
     alert(res);
   }
+  async function servecode() {
+    let res = await jq.post("/api/admin/servecode");
+    alert(res);
+  }
+  async function restartreemo() {
+    let res = await jq.post("/api/admin/restartreemo");
+    alert(res);
+  }
 
 
 
@@ -67,6 +75,16 @@
       uuid: user.uuid,
       permissions: JSON.parse(user.stringifiedpermission),
     });
+  }
+
+  async function startDevServer(){
+    request<Admin.StartDevSeverRequest>(Admin.StartDevServer,{
+      port: Number(prompt("port?")),
+      require: Number(prompt("required permission? 0 = anyone, 1 = trusted, 2 = only you"))
+    })
+  }
+  async function stopDevServer(){
+    request(Admin.StopDevServer);
   }
   (async () => {
     users = await request<any, Admin.GetAllUsersResponse>(Admin.GetAllUsers);
@@ -93,11 +111,15 @@
       <SelectButton text={"Start X11VncServer"} click={startx11vnc} />
       <SelectButton text={"Terminate Novnc Server"} click={killnovnc} />
 
-      <SelectButton text={"Terminate CRD Daemon"} click={stopcrd} />
-      <SelectButton text={"Start MC Server"} click={startmc} />
 
-      <SelectButton text={"Launch Steam Link"} click={() => alert("later")} />
-      <SelectButton text={"Restart Server"} click={() => alert("later")} />
+      <SelectButton text={"Restart Reemo"} click={restartreemo} />
+
+      <SelectButton text={"Serve VSCode"} click={servecode} />
+      
+      <SelectButton text={"Start Dev Server"} click={startDevServer} />
+      <SelectButton text={"Stop Dev Server"} click={stopDevServer} />
+
+
     {:else if selectedtab == "users"}
       {#each users as user}
         <div class="darkp1">

