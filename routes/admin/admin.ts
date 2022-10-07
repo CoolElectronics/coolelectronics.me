@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import * as proc from "child_process";
 import axios from "axios";
 import { Error, RequestType } from "../../clienttypes";
+import * as Sign from "../sign/types";
 
 import * as Admin from "./types";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -255,7 +256,33 @@ export default {
       route: ()=>{
        devProxy = null; 
       }
+    },
+    {
+      api:Admin.GetPasswordResets,
+      require:{Administrator:true},
+      route: async (state:App):Promise<Admin.GetPasswordResetsResponse> =>{
+        let resets = await state.db.getAll<Sign.PasswordReset>("PasswordResets");
+        return await Promise.all(resets.map(async (r:Sign.PasswordReset)=>{
+          let user = await state.db.getUser(r.uuid);
+          if (!user) console.error("uh");
+          return {
+            username: user!.username,
+            uuid:r.uuid,
+          }
+        }));
+      }
+    },
+    {
+      api:Admin.ApprovePasswordReset,
+      require: {Administrator:true},
+      route: async (state:App,body:Admin.ApprovePasswordResetRequest)=>{
+        let reset = await state.db.getOne<Sign.PasswordReset>("PasswordResets",{uuid:body.uuid});
+        if (!reset) return;
+        await state.db.modifyOne("Users",{uuid:body.uuid},(u)=>u.hash = reset!.hash);
+        await state.db.database.collection("PasswordResets").deleteOne({uuid:body.uuid})
+      }
     }
+
   ],
   listeners: [],
 };

@@ -106,13 +106,7 @@ global.rootDir = path.resolve(__dirname);
       }
     );
   };
-  // app.use((req:Request,res:Response,next)=>{
-  //   if (req.path.includes("74b1f979648cc44d385a2286793c226e611f59e7") && !req.path.includes("/vscode/")){
-  //     res.redirect("/vscode"+req.path);
-  //   }else{
-  //     next();
-  //   }
-  // })
+
   codeApp.use(
     "/",
     createProxyMiddleware({
@@ -168,9 +162,9 @@ global.rootDir = path.resolve(__dirname);
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use(["/pfp"], express.static(__dirname + "/pfp"));
   app.use(express.static(__dirname + "/static"));
-  app.get("/ads.txt", (req: Request, res: Response) => {
-    res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me");
-  });
+  // app.get("/ads.txt", (req: Request, res: Response) => {
+  //   res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me");
+  // });
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
     if (misc.visitedips.includes(req.ip)) {
@@ -251,7 +245,22 @@ global.rootDir = path.resolve(__dirname);
             () => res.send(401)
           );
         } else {
-          endpoint.route(state, req, res, next);
+          if (endpoint.api) {
+            let body: object | null = parseBody(req.body, endpoint.api.request);
+            if (body) {
+              res.send(await endpoint.route(state, body, req, res, next));
+            } else {
+              res.send({ error: "invalid schema" });
+              console.log(
+                "bad schema. wanted " +
+                  endpoint.api.request +
+                  " got " +
+                  req.body
+              );
+            }
+          } else {
+            endpoint.route(state, req, res, next);
+          }
         }
       };
       let type = endpoint.api ? endpoint.api.type : endpoint.type;
@@ -289,7 +298,9 @@ global.rootDir = path.resolve(__dirname);
   httpServer.listen(port, () => console.log(`app : ${port}.`));
   codeServer.listen(codePort, () => console.log(`code server : ${codePort}.`));
   vncServer.listen(vncPort, () => console.log(`vnc server : ${vncPort}.`));
-  cryptoServer.listen(cryptoPort, () => console.log(`crypto proxy : ${cryptoPort}`));
+  cryptoServer.listen(cryptoPort, () =>
+    console.log(`crypto proxy : ${cryptoPort}`)
+  );
   devServer.listen(devPort, () => console.log(`dev proxy: ${devPort}`));
   Bridge.start(state, process.env.BOT_SECRET!, process.env.BOT_ID!);
 })();

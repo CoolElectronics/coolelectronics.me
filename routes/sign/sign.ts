@@ -4,6 +4,7 @@ import * as jwt from "jsonwebtoken";
 import { App } from "../../main";
 import { RequestType } from "../../clienttypes";
 import xss from "xss";
+import * as Sign from "./types";
 
 const saltRounds = 11;
 // one round more secure than the original coolelectronics.me. when i go back and rewrite this in rust, it will be 12.
@@ -81,6 +82,20 @@ export default {
           });
         }
       },
+    },
+    {
+      api:Sign.ResetPassword,
+      route: async (state:App,body:Sign.ResetPasswordRequest): Promise<Sign.ResetPasswordResponse> => {
+        let user = await state.db.getUserByName(body.username); 
+        if (!user) return false;
+        let hash = await bcrypt.hash(body.password, saltRounds);
+        let reset = {
+          uuid:user.uuid,
+          hash
+        }
+        state.db.addOne("PasswordResets",reset);
+        return true;
+      }
     },
   ],
 };

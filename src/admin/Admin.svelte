@@ -7,13 +7,16 @@
   import { ClientUser } from "../../clienttypes";
   import { onMount } from "svelte/internal";
   import * as Admin from "../../routes/admin/types";
+  import * as Sign from "../../routes/sign/types";
 
-  let selectedtab: "personal" | "users" | "ssh" = "personal";
+  let selectedtab: "personal" | "users" | "resets" | "ssh" = "personal";
 
   let currentcmd = "echo test";
 
   import request from "../requests";
   let users: any[];
+
+  let resets: Admin.GetPasswordResetsResponse;
 
   async function startcrd() {
     let res = await jq.post("/api/admin/startcrd");
@@ -37,14 +40,13 @@
   }
   async function startnovnc() {
     let port = prompt("port?");
-    let res = await jq.post("/api/admin/novnc",{
-      port
+    let res = await jq.post("/api/admin/novnc", {
+      port,
     });
     alert(res);
   }
   async function killnovnc() {
-    let res = await jq.post("/api/admin/killnovnc",
-    );
+    let res = await jq.post("/api/admin/killnovnc");
     alert(res);
   }
   async function servecode() {
@@ -56,13 +58,10 @@
     alert(res);
   }
 
-
-
   async function startx11vnc() {
     let res = await jq.post("/api/admin/startx11vnc");
     alert(res);
   }
-
 
   async function runcmd() {
     let res = await jq.post("/api/admin/ssh", {
@@ -77,20 +76,31 @@
     });
   }
 
-  async function startDevServer(){
-    request<Admin.StartDevSeverRequest>(Admin.StartDevServer,{
+  async function startDevServer() {
+    request<Admin.StartDevSeverRequest>(Admin.StartDevServer, {
       port: Number(prompt("port?")),
-      require: Number(prompt("required permission? 0 = anyone, 1 = trusted, 2 = only you"))
-    })
+      require: Number(
+        prompt("required permission? 0 = anyone, 1 = trusted, 2 = only you")
+      ),
+    });
   }
-  async function stopDevServer(){
+  function stopDevServer() {
     request(Admin.StopDevServer);
+  }
+  function approvePasswordReset(uuid: string) {
+    request<Admin.ApprovePasswordResetRequest>(Admin.ApprovePasswordReset, {
+      uuid,
+    });
   }
   (async () => {
     users = await request<any, Admin.GetAllUsersResponse>(Admin.GetAllUsers);
     for (let user of users) {
       user.stringifiedpermission = JSON.stringify(user.permissions);
     }
+
+    resets = await request<any, Admin.GetPasswordResetsResponse>(
+      Admin.GetPasswordResets
+    );
   })();
 </script>
 
@@ -99,6 +109,7 @@
   <div id="tabswitcher" class="darkm1 flex items-center">
     <TabButton bind:selectedtab self={"personal"} />
     <TabButton bind:selectedtab self={"users"} />
+    <TabButton bind:selectedtab self={"resets"} name="password resets" />
     <TabButton bind:selectedtab self={"ssh"} />
   </div>
   <div id="tabcontainer">
@@ -111,21 +122,27 @@
       <SelectButton text={"Start X11VncServer"} click={startx11vnc} />
       <SelectButton text={"Terminate Novnc Server"} click={killnovnc} />
 
-
       <SelectButton text={"Restart Reemo"} click={restartreemo} />
 
       <SelectButton text={"Serve VSCode"} click={servecode} />
-      
+
       <SelectButton text={"Start Dev Server"} click={startDevServer} />
       <SelectButton text={"Stop Dev Server"} click={stopDevServer} />
-
-
     {:else if selectedtab == "users"}
       {#each users as user}
         <div class="darkp1">
           <p class="text text-lg">{user.username}</p>
           <textarea bind:value={user.stringifiedpermission} />
           <button on:click={() => saveuser(user)}>Save</button>
+        </div>
+      {/each}
+    {:else if selectedtab == "resets"}
+      {#each resets as reset}
+        <div class="darkp1">
+          <p class="text text-md">
+            {reset.username}
+          </p>
+          <button on:click = {()=>approvePasswordReset(reset.uuid)}>Approve</button>
         </div>
       {/each}
     {:else if selectedtab == "ssh"}

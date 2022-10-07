@@ -1,5 +1,5 @@
 import { ClientUser, RequestType } from "../../clienttypes";
-
+import * as Sign from "../sign/types";
 export type GetAllUsersResponse = ClientUser[];
 export const GetAllUsers = {
   type:RequestType.GET,
@@ -42,4 +42,26 @@ export const StopDevServer = {
   route: "admin",
   request: {
   }
+}
+
+export const GetPasswordResets = {
+  type: RequestType.GET,
+  path: "getresets",
+  route: "admin",
+  request: {
+  }
+}
+export type GetPasswordResetsResponse = {
+  username:string;
+  uuid:string;
+}[];
+
+export interface ApprovePasswordResetRequest{
+  uuid:string;
+}
+export const ApprovePasswordReset = {
+  type: RequestType.POST,
+  path: "approvereset",
+  route: "admin",
+  request:{}
 }

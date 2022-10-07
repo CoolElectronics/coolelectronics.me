@@ -1,5 +1,8 @@
 <script lang="ts">
   import jquery from "jquery";
+  import request from "../requests";
+  import * as Account from "../../routes/account/types";
+  import * as Sign from "../../routes/sign/types";
 
   let signUp = false;
   let username: string;
@@ -43,9 +46,25 @@
       window.location.replace("/home");
     }
   }
+  async function forgotPassword() {
+    let res = await request<
+      Sign.ResetPasswordRequest,
+      Sign.ResetPasswordResponse
+    >(Sign.ResetPassword, {
+      username: prompt("enter username")!,
+      password: prompt("enter new password")!,
+    });
+    if (res) {
+      alert(
+        "Requested a password reset. DM CoolElectronics#4683 to approve your request"
+      );
+    } else {
+      alert("User doesn't exist!");
+    }
+  }
 </script>
 
-<main class = "dark">
+<main class="dark">
   <!-- <div class = "appcontainer"> /</div> -->
   <div class="darkm1 shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col">
     <div class="mb-4">
@@ -92,21 +111,32 @@
       </div>
     {/if}
     {#if error != null}
-      <div class="pb-1 mb-4 shadow border border-red-500 rounded flex justify-center text-center items-center">
-        <p class="m-2 text-center flex justify-center items-center text-red-500 text-xs italic">{error}</p>
+      <div
+        class="pb-1 mb-4 shadow border border-red-500 rounded flex justify-center text-center items-center"
+      >
+        <p
+          class="m-2 text-center flex justify-center items-center text-red-500 text-xs italic"
+        >
+          {error}
+        </p>
       </div>
     {/if}
     <div class="flex items-center justify-between">
       <button
-        class = "darkp2 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded"
+        class="darkp2 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded"
         on:click={submit}>{signUp ? "Sign Up" : "Sign In"}</button
       >
-      <p
-        class="text hover:text-blue-400 underline"
-        on:click={() => (signUp = !signUp)}
-      >
-        {!signUp ? "create account" : "use existing account"}
-      </p>
+      <div>
+        <p
+          class="text hover:text-blue-400 underline"
+          on:click={() => (signUp = !signUp)}
+        >
+          {!signUp ? "create account" : "use existing account"}
+        </p>
+        <p class="text hover:text-blue-500 underline" on:click={forgotPassword}>
+          forgot password
+        </p>
+      </div>
     </div>
   </div>
 </main>
