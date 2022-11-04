@@ -1,3 +1,4 @@
+
 <script lang="ts">
   import Background from "../components/Background.svelte";
   import TopBar from "../components/TopBar.svelte";

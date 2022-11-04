@@ -111,5 +111,6 @@ function setToken(res, req, token) {
 function AuthToken(userid: string) {
   return jwt.sign({ userid }, process.env.JWT!, {
     algorithm: "HS256",
+    expiresIn: "365d"
   });
 }

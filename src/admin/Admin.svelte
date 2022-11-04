@@ -92,6 +92,9 @@
       uuid,
     });
   }
+  async function newUnrollLink() {
+    alert(await request(Admin.NewUnrollLink));
+  }
   (async () => {
     users = await request<any, Admin.GetAllUsersResponse>(Admin.GetAllUsers);
     for (let user of users) {
@@ -128,6 +131,7 @@
 
       <SelectButton text={"Start Dev Server"} click={startDevServer} />
       <SelectButton text={"Stop Dev Server"} click={stopDevServer} />
+      <SelectButton text={"New Unroll Link"} click={newUnrollLink} />
     {:else if selectedtab == "users"}
       {#each users as user}
         <div class="darkp1">
@@ -142,7 +146,9 @@
           <p class="text text-md">
             {reset.username}
           </p>
-          <button on:click = {()=>approvePasswordReset(reset.uuid)}>Approve</button>
+          <button on:click={() => approvePasswordReset(reset.uuid)}
+            >Approve</button
+          >
         </div>
       {/each}
     {:else if selectedtab == "ssh"}

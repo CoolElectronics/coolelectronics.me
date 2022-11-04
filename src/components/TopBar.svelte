@@ -4,8 +4,8 @@
   import {
     faRightFromBracket,
     faHouseUser,
-faSignOut,
-faSignIn,
+    faSignOut,
+    faSignIn,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     FontAwesomeIcon,
@@ -26,20 +26,13 @@ faSignIn,
   export let self: ClientSelf | null = null;
   export let socket: Socket = io();
   export let showtoasts = true;
+  export let askForNotifs: boolean = true;
 
   let focused = true;
 
   let toasts: Toast[] = [];
 
   let connected = true;
-
-  let styleinject = `
-  <style>
-    .toast > *{
-      margin:0 !important
-    }
-  </style>
-  `;
 
   init();
   if (!self) {
@@ -51,10 +44,10 @@ faSignIn,
   window.onfocus = () => (focused = true);
 
   socket.on("index:notification", () => {});
-  try{
-    Notification.requestPermission();
-  }catch{
-  
+  if (askForNotifs) {
+    try {
+      Notification.requestPermission();
+    } catch {}
   }
   socket.on("chat:newmessage", (msg) => {
     let message: ClientChatMessage = msg.msg;
@@ -109,20 +102,20 @@ faSignIn,
     <p class="text text-3xl m-4">{title}</p>
   </div>
   <div class="flex items-center">
-      {#if self}
-    <a href="/home" class="m-2">
-      <FontAwesomeIcon size="lg" icon={faHouseUser} inverse={true} />
-    </a>
-    <button on:click={showNotifs} />
-    <a href="/account" class="m-2">
+    {#if self}
+      <a href="/home" class="m-2">
+        <FontAwesomeIcon size="lg" icon={faHouseUser} inverse={true} />
+      </a>
+      <button on:click={showNotifs} />
+      <a href="/account" class="m-2">
         <Pfp size="large" name={self.username} />
-    </a>
-    <button on:click={signOut} class="m-2">
-      <FontAwesomeIcon size="lg" icon={faRightFromBracket} inverse={true} />
-    </button>
+      </a>
+      <button on:click={signOut} class="m-2">
+        <FontAwesomeIcon size="lg" icon={faRightFromBracket} inverse={true} />
+      </button>
     {:else}
-      <a href = "/sign">
-      <FontAwesomeIcon size="lg" icon={faSignIn} inverse={true}/>
+      <a href="/sign">
+        <FontAwesomeIcon size="lg" icon={faSignIn} inverse={true} />
       </a>
     {/if}
   </div>
@@ -157,9 +150,7 @@ faSignIn,
     {/each}
   {/if}
 </div>
-{@html styleinject}
 
-<!--hahhaha don't ask besides its temporary:tm:-->
 <style>
   #root {
     grid-area: topbar;
@@ -182,6 +173,9 @@ faSignIn,
     width: 20%;
     border: 4px solid var(--darkp1);
     padding: 10px;
-    z-index: 999;
+    z-index: 9999;
+  }
+  :global(.toast > *) {
+    margin: 0 !important;
   }
 </style>

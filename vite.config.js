@@ -18,7 +18,8 @@ const routes = [
   "ftp",
   "sparkboard",
   "schedule",
-  "money"
+  "money",
+  "unenroll",
 ];
 let input = { main: resolve(root, "index.html") };
 for (let route of routes) {

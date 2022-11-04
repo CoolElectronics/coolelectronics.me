@@ -1,7 +1,8 @@
 <script lang="ts">
+  export let forceScript: number | null = null;
   import P5 from "p5-svelte";
   import p5i from "p5";
-import { debug } from "svelte/internal";
+  import { debug } from "svelte/internal";
 
   let target: HTMLElement;
   const bg = [285, 13, 18];
@@ -17,9 +18,9 @@ import { debug } from "svelte/internal";
     }
     palette.push(col);
   }
-   function mod(i, n) {
-        return ((i % n) + n) % n;
-      }
+  function mod(i, n) {
+    return ((i % n) + n) % n;
+  }
   const sketches = [
     // doom fire
     (p5: p5i) => {
@@ -273,7 +274,7 @@ import { debug } from "svelte/internal";
       let arr;
       let scale = 8;
       let width, height;
-   
+
       const resize = () => {
         p5.resizeCanvas(window.innerWidth, window.innerHeight);
         width = Math.ceil(p5.width / scale);
@@ -329,62 +330,63 @@ import { debug } from "svelte/internal";
         arr = [...temp];
       };
     },
-    // (p5: p5i) => {
-    //   let dots: { x: number; y: number,c, dx,dy}[] = [];
-    //   const numdots = 2;
-    //   const resize = () => {
-    //     p5.resizeCanvas(window.innerWidth, window.innerHeight);
-    //     p5.background(bg);
-    //     dots = Array(numdots)
-    //       .fill(null)
-    //       .map((_) => {
-    //         return {
-    //           x: p5.random(0, p5.width ),
-    //           y: p5.random(0, p5.height),
-    //           c:pal(p5.random(0,100)),
-    //           dx: p5.random(-0.25,0.25),
-    //           dy: p5.random(-0.25,0.25)
-    //         }
-    //       });
-    //   };
-    //   p5.setup = () => {
-    //     p5.colorMode(p5.HSL);
-    //     p5.createCanvas(4, 4);
-    //     p5.strokeWeight(0);
-    //
-    //     resize();
-    //     window.onresize = resize;
-    //   };
-    //   window["multiplier"] = 1;
-    //   window["dump"] = ()=>{
-    //     console.log(dots); 
-    //     debugger;
-    //   }
-    //   p5.draw = () => {
-    //     p5.background(bg);
-    //     for (let dot of dots){
-    //       p5.strokeWeight(0);
-    //       p5.fill(dot.c);
-    //       p5.circle(dot.x,dot.y,5);
-    //       for (let other of dots){
-    //         if (other != dot){
-    //           // console.table({dot,other,dist: Math.sqrt(((dot.x - other.x)^2) + ((dot.y - other.y)^2))});
-    //           // debugger;
-    //           if (Math.sqrt(((dot.x - other.x)^2) + ((dot.y - other.y)^2)) < 8){
-    //             p5.strokeWeight(2);
-    //             p5.stroke(dot.c);
-    //             p5.line(dot.x,dot.y,other.x,other.y); 
-    //           }
-    //         }
-    //       }
-    //       dot.x = mod(dot.x + window["multiplier"] * dot.dx,p5.width);
-    //       dot.y = mod(dot.y + window["multiplier"] * dot.dy, p5.height);
-    //     }
-    //   };
-    // },
+    (p5: p5i) => {
+      let dots: { x: number; y: number; c; dx; dy }[] = [];
+      const numdots = 25;
+      const resize = () => {
+        p5.resizeCanvas(window.innerWidth, window.innerHeight);
+        p5.background(bg);
+        dots = Array(numdots)
+          .fill(null)
+          .map((_) => {
+            return {
+              x: p5.random(0, p5.width),
+              y: p5.random(0, p5.height),
+              c: pal(p5.random(0, 100)),
+              dx: p5.random(-0.25, 0.25),
+              dy: p5.random(-0.25, 0.25),
+            };
+          });
+      };
+      p5.setup = () => {
+        p5.colorMode(p5.HSL);
+        p5.createCanvas(4, 4);
+        p5.strokeWeight(0);
+
+        resize();
+        window.onresize = resize;
+      };
+      p5.draw = () => {
+        p5.background(bg);
+        for (let dot of dots) {
+          for (let other of dots) {
+            if (other != dot) {
+              let dist = Math.sqrt(
+                (dot.x - other.x) ** 2 + (dot.y - other.y) ** 2
+              );
+              if (dist < 128) {
+                p5.strokeWeight(2);
+                p5.stroke(pal(p5.map(dist, 0, 128, 200, 0)));
+                p5.line(dot.x, dot.y, other.x, other.y);
+              }
+            }
+          }
+          dot.x = mod(dot.x + dot.dx, p5.width);
+          dot.y = mod(dot.y + dot.dy, p5.height);
+        }
+        for (let dot of dots) {
+          p5.strokeWeight(0);
+          p5.fill(64);
+          p5.circle(dot.x, dot.y, 6);
+        }
+      };
+    },
   ];
 
-  let sketch = sketches[Math.floor(Math.random() * sketches.length)];
+  let sketch =
+    forceScript != null
+      ? sketches[forceScript]
+      : sketches[Math.floor(Math.random() * sketches.length)];
   // sketch = sketches[sketches.length - 1];
   function pal(num: number): number[] {
     let col = [0, 0, 0];

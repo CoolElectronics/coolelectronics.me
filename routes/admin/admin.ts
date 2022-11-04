@@ -8,6 +8,7 @@ import * as Sign from "../sign/types";
 
 import * as Admin from "./types";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { randomUUID } from "crypto";
 
 var devProxy: Function | null;
 
@@ -114,7 +115,6 @@ export default {
         Administrator: true,
       },
     },
-
     {
       path: "/startx11vnc",
       type: RequestType.POST,
@@ -228,19 +228,19 @@ export default {
         body: Admin.StartDevSeverRequest
       ): Promise<Error | null> => {
         let requireCheck = async (
-          _:any,
+          _: any,
           req: Request,
           res: Response,
         ) => {
           state.db.Validate(
             req.cookies,
             body.require == 1 ? { chat: {} } : { Administrator: true },
-            () => {},
+            () => { },
             () => res.send("forbidden")
           );
         };
         let plugin = (proxyServer) => {
-          proxyServer.on("proxyReq",requireCheck);
+          proxyServer.on("proxyReq", requireCheck);
         };
         devProxy = createProxyMiddleware({
           target: `http://10.0.1.65:${body.port}`,
@@ -252,45 +252,71 @@ export default {
     },
     {
       api: Admin.StopDevServer,
-      require: {Administrator:true},
-      route: ()=>{
-       devProxy = null; 
+      require: { Administrator: true },
+      route: () => {
+        devProxy = null;
       }
     },
     {
-      api:Admin.GetPasswordResets,
-      require:{Administrator:true},
-      route: async (state:App):Promise<Admin.GetPasswordResetsResponse> =>{
+      api: Admin.GetPasswordResets,
+      require: { Administrator: true },
+      route: async (state: App): Promise<Admin.GetPasswordResetsResponse> => {
         let resets = await state.db.getAll<Sign.PasswordReset>("PasswordResets");
-        return await Promise.all(resets.map(async (r:Sign.PasswordReset)=>{
+        return await Promise.all(resets.map(async (r: Sign.PasswordReset) => {
           let user = await state.db.getUser(r.uuid);
           if (!user) console.error("uh");
           return {
             username: user!.username,
-            uuid:r.uuid,
+            uuid: r.uuid,
           }
         }));
       }
     },
     {
-      api:Admin.ApprovePasswordReset,
-      require: {Administrator:true},
-      route: async (state:App,body:Admin.ApprovePasswordResetRequest)=>{
-        let reset = await state.db.getOne<Sign.PasswordReset>("PasswordResets",{uuid:body.uuid});
+      api: Admin.ApprovePasswordReset,
+      require: { Administrator: true },
+      route: async (state: App, body: Admin.ApprovePasswordResetRequest) => {
+        let reset = await state.db.getOne<Sign.PasswordReset>("PasswordResets", { uuid: body.uuid });
         if (!reset) return;
-        await state.db.modifyOne("Users",{uuid:body.uuid},(u)=>u.hash = reset!.hash);
-        await state.db.database.collection("PasswordResets").deleteOne({uuid:body.uuid})
+        await state.db.modifyOne("Users", { uuid: body.uuid }, (u) => u.hash = reset!.hash);
+        await state.db.database.collection("PasswordResets").deleteOne({ uuid: body.uuid })
+      }
+    },
+    {
+      api: Admin.NewUnrollLink,
+      require: { Administrator: true },
+      route: async (state: App): Promise<Admin.NewUnrollLinkResponse> => {
+        let link = randomUUID();
+        state.activelinks.push(link);
+        setDaysTimeout(() => {
+          state.activelinks = [];
+        }, 5)
+
+        return link;
       }
     }
 
   ],
   listeners: [],
 };
+function setDaysTimeout(callback, days) {
+  // 86400 seconds in a day
+  let msInDay = 86400 * 1000;
 
-export function getDevProxy(req,res,next): any {
-  if (devProxy){
-    devProxy(req,res,next)
-  }else{
+  let dayCount = 0;
+  let timer = setInterval(function (this: any) {
+    dayCount++;  // a day has passed
+
+    if (dayCount === days) {
+      clearInterval(timer);
+      callback.apply(this, []);
+    }
+  }, msInDay);
+}
+export function getDevProxy(req, res, next): any {
+  if (devProxy) {
+    devProxy(req, res, next)
+  } else {
     res.send("development tunnel not running")
   }
 }

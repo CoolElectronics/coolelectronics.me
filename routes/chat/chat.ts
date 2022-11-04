@@ -47,7 +47,19 @@ export default {
     {
       path: "send",
       route: async (state: App, user: User, req) => {
-        let sanitized = xss(req.message).normalize();
+        let sanitized = xss(req.message,{whiteList: {
+          a: ["href", "title", "target"],
+          div: ["style","color"],
+          span: ["style","color"],
+          h1: ["style","color"],
+          h2: ["style","color"],
+          h3: ["style","color"],
+          h4: ["style","color"],
+          svg: [],
+          article:[],
+          img: ["src","alt"],
+        }}).normalize();
+        console.log(sanitized);
         if (sanitized == "") return;
         let room: Room | null = await state.db.getOne("Rooms", {
           uuid: req.id,

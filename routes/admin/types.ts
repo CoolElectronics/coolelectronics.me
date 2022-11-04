@@ -2,28 +2,28 @@ import { ClientUser, RequestType } from "../../clienttypes";
 import * as Sign from "../sign/types";
 export type GetAllUsersResponse = ClientUser[];
 export const GetAllUsers = {
-  type:RequestType.GET,
+  type: RequestType.GET,
   path: "users",
   route: "admin",
-  request:{},
+  request: {},
 }
 
 
-export interface SetUserPermissionsRequest{
-  uuid:string;
-  permissions:object;
+export interface SetUserPermissionsRequest {
+  uuid: string;
+  permissions: object;
 }
 export const SetUserPermissions = {
   type: RequestType.POST,
   path: "setperms",
-  route:"admin",
-  request:{
-    uuid:"",
-    permissions:{},
+  route: "admin",
+  request: {
+    uuid: "",
+    permissions: {},
   }
 }
 
-export interface StartDevSeverRequest{
+export interface StartDevSeverRequest {
   port: number,
   require: number, // 0 = anyone, 1 = trusted, 2 = admin
 }
@@ -52,16 +52,23 @@ export const GetPasswordResets = {
   }
 }
 export type GetPasswordResetsResponse = {
-  username:string;
-  uuid:string;
+  username: string;
+  uuid: string;
 }[];
 
-export interface ApprovePasswordResetRequest{
-  uuid:string;
+export interface ApprovePasswordResetRequest {
+  uuid: string;
 }
 export const ApprovePasswordReset = {
   type: RequestType.POST,
   path: "approvereset",
   route: "admin",
-  request:{}
+  request: {}
 }
+export const NewUnrollLink = {
+  type: RequestType.POST,
+  path: "newunroll",
+  route: "admin",
+  request: {}
+}
+export type NewUnrollLinkResponse = string;

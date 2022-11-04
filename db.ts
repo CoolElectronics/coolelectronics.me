@@ -24,6 +24,7 @@ export async function connect(): Promise<Database> {
     "FriendRequests",
     "Misc",
     "PasswordResets",
+    "FrcData",
   ]);
   await database.updateUserSchemas();
   return database;

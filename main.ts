@@ -13,6 +13,8 @@ import playgroundRoute from "./routes/playground/playground";
 import sparkboardRoute from "./routes/sparkboard/sparkboard";
 import scheduleRoute from "./routes/schedule/schedule";
 import moneyRoute from "./routes/money/money";
+import unenrollRoute from "./routes/unenroll/unenroll";
+import frcRoute from "./routes/frc/frc";
 
 import * as Bridge from "./bridge/bot";
 import proxy, { createProxyMiddleware } from "http-proxy-middleware";
@@ -82,7 +84,7 @@ try {
     process.env.PUSH_PUB!,
     process.env.PUSH_PRIV!
   );
-} catch {}
+} catch { }
 
 global.rootDir = path.resolve(__dirname);
 
@@ -90,6 +92,7 @@ global.rootDir = path.resolve(__dirname);
   let state: App = {
     db: await connect(),
     io,
+    activelinks: [],
     usercache: new AppCache<string, Socket | null, CachedUser>(),
   };
 
@@ -100,7 +103,7 @@ global.rootDir = path.resolve(__dirname);
         state.db.Validate(
           req.cookies,
           { Administrator: true },
-          () => {},
+          () => { },
           () => res.send("forbidden")
         );
       }
@@ -157,7 +160,15 @@ global.rootDir = path.resolve(__dirname);
     sparkboardRoute,
     scheduleRoute,
     moneyRoute,
+    unenrollRoute,
+    frcRoute,
   ];
+
+  for (let route of routes) {
+    if (route.init) {
+      route.init(state, app);
+    }
+  }
 
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use(["/pfp"], express.static(__dirname + "/pfp"));
@@ -170,12 +181,12 @@ global.rootDir = path.resolve(__dirname);
     if (misc.visitedips.includes(req.ip)) {
       res.send(
         "hey! you've already been here. if you were here to see what the current count is, its " +
-          misc.biocounter
+        misc.biocounter
       );
     } else {
       res.send(
         "thanks for helping me answer my question. if you were wondering, the answer is " +
-          misc.biocounter
+        misc.biocounter
       );
       state.db.modifyOne("Misc", {}, (m) => {
         m.visitedips.push(req.ip);
@@ -183,7 +194,6 @@ global.rootDir = path.resolve(__dirname);
       });
     }
   });
-
   routes.forEach((route) => {
     console.log(Object.keys(route));
     app.get("/" + route.path, (req: Request, res, next) => {
@@ -233,9 +243,9 @@ global.rootDir = path.resolve(__dirname);
                   res.send({ error: "invalid schema" });
                   console.log(
                     "bad schema. wanted " +
-                      endpoint.api.request +
-                      " got " +
-                      req.body
+                    endpoint.api.request +
+                    " got " +
+                    req.body
                   );
                 }
               } else {
@@ -253,9 +263,9 @@ global.rootDir = path.resolve(__dirname);
               res.send({ error: "invalid schema" });
               console.log(
                 "bad schema. wanted " +
-                  endpoint.api.request +
-                  " got " +
-                  req.body
+                endpoint.api.request +
+                " got " +
+                req.body
               );
             }
           } else {
@@ -325,6 +335,7 @@ interface Route {
   api: ApiEndpoint[];
   require?: object | null;
   seopage?: string;
+  init?: Function;
 }
 
 export interface SocketEndpoint {
@@ -342,6 +353,7 @@ export interface ApiEndpoint {
 export interface App {
   db: Database;
   io: Server;
+  activelinks: string[];
   usercache: AppCache<string, Socket | null, CachedUser>;
 }
 export interface CachedUser {

@@ -21,6 +21,7 @@
   $: format(message.message).then((_) => (formattedmsg = _));
 
   async function format(message: string) {
+    if (message.includes("<")) return message;
     let buf = "";
     for (let part of message.split(" ")) {
       if (urlregex.test(part)) {
@@ -41,26 +42,26 @@
                     <video controls class = "scaledown">
                       <source src = "${url}">
                     </video>
-                  </div>`
+                  </div>`;
     if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) return imgurl;
     if (url.match(/\.(webm|mp4|ogg)$/) != null) return videourl;
-    try{
-    let res = await fetch(url);
-    // leaks user ips
-    if (res.status === 200) {
-      switch (res.headers.get("Content-Type")) {
-        case "image/png":
-        case "image/jpg":
-        case "image/jpeg":
-          return imgurl; 
-        case "video/mp4":
-        case "video/webm":
-        case "video/ogg":
-          return videourl;
+    try {
+      let res = await fetch(url);
+      // leaks user ips
+      if (res.status === 200) {
+        switch (res.headers.get("Content-Type")) {
+          case "image/png":
+          case "image/jpg":
+          case "image/jpeg":
+            return imgurl;
+          case "video/mp4":
+          case "video/webm":
+          case "video/ogg":
+            return videourl;
+        }
       }
-    }
-    }catch{}
-          return `<a style = "color:blue" href = ${url}>${url}</a>`;
+    } catch {}
+    return `<a style = "color:blue" href = ${url}>${url}</a>`;
   }
   onMount(() => {
     msgelement.scrollIntoView();
@@ -103,15 +104,18 @@
 {:else}
   <div class="minimized flex" bind:this={msgelement}>
     <div class="pfp-filler" />
-    <div class="ml-2.5 text text-sm">
+    <div class="ml-2.5 text text-sm msgcontainer">
       {@html formattedmsg}
     </div>
   </div>
 {/if}
 
 <style>
-  :global(.scaledown) {
+  :global(img) {
     height: 100%;
+  }
+  .msgcontainer{
+    max-width:200px; 
   }
   .message {
     background-color: var(--darkm3);
