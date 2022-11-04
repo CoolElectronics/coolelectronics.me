@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite build --mode development;npx ts-node --project node-tsconfig.json main.ts",
+    "dbuild": "vite build --mode development",
     "prod": "npx ts-node --project node-tsconfig.json main.ts",
     "build": "vite build",
     "preview": "vite preview"
@@ -46,6 +47,7 @@
     "express": "^4.18.1",
     "express-fileupload": "^1.4.0",
     "express-http-proxy": "^1.6.3",
+    "folder-hash": "^4.0.2",
     "fontawesome-svelte": "^2.0.1",
     "formidable": "^2.0.1",
     "http": "^0.0.1-security",
