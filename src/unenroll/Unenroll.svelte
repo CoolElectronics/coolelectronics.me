@@ -76,7 +76,7 @@
           click={() => (selected = "91")}
           text="ShRootV91 - CROSH"
         />
-        <SelectButton click={() => (selected = "81")} text="Shill Breakout" />
+        <!-- <SelectButton click={() => (selected = "81")} text="Shill Breakout" /> -->
       </div>
       {#if selected != null}
         <div class="text p-5 flex justify-center flex-col">
@@ -90,7 +90,8 @@
           {#if selected == "101" || selected == "91" || selected == "87"}
             This method requires crosh to be unblocked on your chromebook.<br />
             Crosh can be opened with CTRL+ALT+T<br />
-            If it's blocked by an extension, you can disable it with LTBEEF<br/>
+            If it's blocked by an extension, you can disable it with LTBEEF<br
+            />
             {#if selected == "91"}
               v91 WILL NOT WORK ON GRUNT BOARDS
             {/if}

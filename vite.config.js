@@ -24,6 +24,7 @@ const routes = [
   "money",
   "unenroll",
   "frc",
+  "status",
 ];
 let input = { main: resolve(root, "index.html") };
 for (let route of routes) {

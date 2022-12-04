@@ -81,11 +81,6 @@
 
 <main class="dark">
   <div class="darkm1 rounded-md p-2">
-    <div class={"justify-evenly flex " + (thin ? "flex-col" : "")}>
-      <CargoIncrementor title="Autonomous" bind:score={robot.auto} />
-      <CargoIncrementor title="Teleoperated" bind:score={robot.teleop} />
-    </div>
-
     <div
       class={`text flex items-center ${
         thin ? "justify-evenly" : "justify-center"
@@ -99,6 +94,17 @@
         <p class="text">match #:</p>
         <input bind:value={robot.match} />
       </div>
+    </div>
+    <div class={"justify-evenly flex " + (thin ? "flex-col" : "")}>
+      <CargoIncrementor title="Autonomous" bind:score={robot.auto} />
+      <CargoIncrementor title="Teleoperated" bind:score={robot.teleop} />
+    </div>
+
+    <div
+      class={`text flex items-center ${
+        thin ? "justify-evenly" : "justify-center"
+      } p-1 ${thin ? "flex-col" : ""}`}
+    >
       <div class="p-1 items-center darkm1 rounded-sm flex">
         <p class="text">taxi?:</p>
         <Switch
@@ -139,8 +145,7 @@
   {#each allrobots as robot}
     <div class="darkp2 rounded-md flex flex-col justify-center items-center">
       <div class="text-center text text-lg">
-        Scout: {robot.scout.name} | Team: {robot.robot.team} | Match #:{robot
-          .robot.match}
+        Team: {robot.robot.team} | Match #:{robot.robot.match}
       </div>
       <div class="flex m-0.5">
         {#each ["Autonomous", "Teleoperated"] as cargotype, cdi}
@@ -155,12 +160,12 @@
                     {scorekind}
                   </p>
                   <div class="darkm1 rounded-md m-2">
-                    <p class="text text-center text-md">
+                    <!-- <p class="text text-center text-md">
                       total: {score.missed + score.scored}
-                    </p>
+                    </p> -->
                     <p class="text text-center text-sm">
                       scored: {score.scored}<br />
-                      missed: {score.missed}<br />
+                      <!-- missed: {score.missed}<br /> -->
                     </p>
                   </div>
                 </div>

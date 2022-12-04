@@ -23,14 +23,14 @@
       <p class="text text-center text-md">Upper</p>
       <div class="flex justify-center">
         <Incrementor title="scored" bind:val={score.upper.scored} />
-        <Incrementor title="missed" bind:val={score.upper.missed} />
+        <!-- <Incrementor title="missed" bind:val={score.upper.missed} /> -->
       </div>
     </div>
     <div>
       <p class="text text-center text-md">Lower</p>
       <div class="flex justify-center">
         <Incrementor title="scored" bind:val={score.lower.scored} />
-        <Incrementor title="missed" bind:val={score.lower.missed} />
+        <!-- <Incrementor title="missed" bind:val={score.lower.missed} /> -->
       </div>
     </div>
   </div>

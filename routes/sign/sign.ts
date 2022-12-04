@@ -84,16 +84,16 @@ export default {
       },
     },
     {
-      api:Sign.ResetPassword,
-      route: async (state:App,body:Sign.ResetPasswordRequest): Promise<Sign.ResetPasswordResponse> => {
-        let user = await state.db.getUserByName(body.username); 
+      api: Sign.ResetPassword,
+      route: async (state: App, body: Sign.ResetPasswordRequest): Promise<Sign.ResetPasswordResponse> => {
+        let user = await state.db.getUserByName(body.username);
         if (!user) return false;
         let hash = await bcrypt.hash(body.password, saltRounds);
         let reset = {
-          uuid:user.uuid,
+          uuid: user.uuid,
           hash
         }
-        state.db.addOne("PasswordResets",reset);
+        state.db.addOne("PasswordResets", reset);
         return true;
       }
     },
@@ -101,9 +101,9 @@ export default {
 };
 function setToken(res, req, token) {
   res.cookie("token", token, {
-    maxAge: 9999990,
+    maxAge: 1000 * 60 * 60 * 24 * 10,
     httpOnly: false,
-    domain:"."+req.hostname,
+    domain: "." + req.hostname,
     sameSite: "strict",
   });
 }

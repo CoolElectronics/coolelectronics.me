@@ -5,26 +5,23 @@ import * as Frc from "./types"
 import { randomUUID } from "crypto";
 export default {
     path: "frc",
-    route: (state: App, user: User, req: Request, res: Response) => {
+    route: (state: App, req: Request, res: Response) => {
         res.sendFile(global.rootDir + "/dist/src/frc/frc.html");
     },
-    require: {},
     listeners: [],
     api: [
         {
             api: Frc.AddRobot,
-            route: async (state: App, user: User, body: Frc.AddRobotRequest): Promise<null | Error> => {
+            route: async (state: App, body: Frc.AddRobotRequest): Promise<null | Error> => {
                 let robot: Frc.Robot = body;
-                robot.scout = user.uuid;
                 robot.uuid = randomUUID();
                 await state.db.addOne("FrcData", robot);
                 return null;
             },
-            require: {}
         },
         {
             api: Frc.GetRobots,
-            route: async (state: App, user: User): Promise<Frc.GetRobotsResponse> => {
+            route: async (state: App): Promise<Frc.GetRobotsResponse> => {
                 let responses: Frc.GetRobotsResponse = [];
 
                 let robots = await state.db.getAll<Frc.Robot>("FrcData");
@@ -32,23 +29,21 @@ export default {
                 for (let robot of robots) {
                     let response = {
                         robot,
-                        scout: await constructClientUser(state, robot.scout!),
+                        scout: null!,
                     }
                     responses.push(response);
                 }
 
                 return responses;
             },
-            require: {}
         },
         {
             api: Frc.DeleteRobot,
-            route: (state: App, user: User, body: Frc.DeleteRobotRequest) => {
+            route: (state: App, body: Frc.DeleteRobotRequest) => {
                 state.db.database.collection("FrcData").deleteOne({
                     uuid: body.uuid,
                 });
             },
-            require: {},
         }
     ]
 }

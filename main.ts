@@ -15,6 +15,7 @@ import scheduleRoute from "./routes/schedule/schedule";
 import moneyRoute from "./routes/money/money";
 import unenrollRoute from "./routes/unenroll/unenroll";
 import frcRoute from "./routes/frc/frc";
+import statusRoute from "./routes/status/status";
 
 import * as Bridge from "./bridge/bot";
 import proxy, { createProxyMiddleware } from "http-proxy-middleware";
@@ -40,17 +41,21 @@ const codePort = 7000;
 const vncPort = 6969;
 const cryptoPort = 7070;
 const devPort = 8001;
+const sh1mmerPort = 8002;
 
 const app = express();
 const codeApp = express();
 const vncApp = express();
 const cryptoApp = express();
 const devApp = express();
+const ftpApp = express();
+const sh1mmerApp = express();
 const httpServer = http.createServer(app);
 const codeServer = http.createServer(codeApp);
 const vncServer = http.createServer(vncApp);
 const cryptoServer = http.createServer(cryptoApp);
 const devServer = http.createServer(devApp);
+const sh1mmerServer = http.createServer(sh1mmerApp);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
 // const socketProxy = createProxyMiddleware("/socketproxy", {
 //   target: "wss://webminer.moneroocean.stream/",
@@ -162,6 +167,7 @@ global.rootDir = path.resolve(__dirname);
     moneyRoute,
     unenrollRoute,
     frcRoute,
+    statusRoute,
   ];
 
   for (let route of routes) {
@@ -173,6 +179,7 @@ global.rootDir = path.resolve(__dirname);
   app.use(["/assets"], express.static(__dirname + "/dist/assets"));
   app.use(["/pfp"], express.static(__dirname + "/pfp"));
   app.use(express.static(__dirname + "/static"));
+  sh1mmerApp.use(express.static(__dirname + "/sh1mmer"));
   // app.get("/ads.txt", (req: Request, res: Response) => {
   //   res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me");
   // });
@@ -312,6 +319,7 @@ global.rootDir = path.resolve(__dirname);
     console.log(`crypto proxy : ${cryptoPort}`)
   );
   devServer.listen(devPort, () => console.log(`dev proxy: ${devPort}`));
+  sh1mmerServer.listen(sh1mmerPort, () => console.log(`sh1mmer server: ${sh1mmerPort}`));
   Bridge.start(state, process.env.BOT_SECRET!, process.env.BOT_ID!);
 })();
 

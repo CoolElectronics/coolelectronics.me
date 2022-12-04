@@ -1,11 +1,17 @@
 import { User } from "../../db";
-import express, { Request, Response } from "express";
+import express, { Application, Request, Response } from "express";
 import { Socket } from "socket.io";
 import { App, parse } from "../../main";
 import { RequestType } from "../../clienttypes";
 import * as Ftp from "./types";
 import xss from "xss";
 import { randomUUID } from "crypto";
+
+let invchars = ["​","‌","‍","⁠"];
+
+function init(state:App,app:Application){
+
+}
 
 export default {
   path: "ftp",
