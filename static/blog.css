@@ -1,0 +1,111 @@
+@font-face {
+    font-family: "inter";
+    src: url("/Inter-Regular.ttf");
+}
+.text,p, h1, h2, h3, h4, h5,h6{
+    font-family: inter;
+    user-select: none;
+    color: var(--text);
+}
+#topbar{
+    padding: 1em;
+    background-color: var(--darkp1);
+}
+#bottombar{
+    /* position: absolute; */
+    /* width: calc(100% - 1em); awful css hack */
+    bottom: 0;
+    padding: 0.5em;
+    background-color: var(--darkm1);
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+#postlist > .preview{
+    margin: 2em;
+}
+.preview{
+    display: block;
+    background-color: var(--darkm2);
+    padding: 0.25em;
+    margin: 0em;
+    text-decoration: none;
+    border-radius: 0.5em;
+    transition: all .2s ease-in-out;
+}
+.previewS:hover{
+    transform: scale(1.01);
+    background-color: var(--darkm1);
+}
+
+.previewM:hover{
+    transform: scale(1.03);
+    background-color: var(--darkm1);
+}
+.preview > *{
+    margin: 0;
+}
+#bottomlinks{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.spacer{
+    margin: 0.25em;
+}
+#title{
+    margin: 0;
+    padding: 0;
+}
+#content{
+    padding: 0.5em;
+    flex:1;
+}
+pre, code{
+    user-select:text;
+    color: var(--faded-cyan);
+}
+body{
+    background-color: var(--dark);
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#analytics{
+    font-size: xx-small;
+}
+
+img{
+    display: block;
+        height: 100%;
+    max-height: 25em;
+    margin: 1em;
+}
+
+
+:root{
+    --darkm3:hsl(280,14%,13%);
+    --darkm2:hsl(285,13%,18%);
+    --darkm1:hsl(281,14%,23%);
+    --dark: hsl(284,13%,28%);
+    --darkp1:hsl(286,13%,33%);
+    --darkp2:hsl(284,14%,38%);
+    --darkp3:hsl(286,13%,43%);
+
+    --lightm1:hsl(284,13%,62%);
+    --light:hsl(284, 13%, 72%);
+    --lightp1:hsl(285,13%,82%);
+
+    --faded-red:hsl(0, 26%, 72%);
+    --faded-blue:hsl(238, 26%, 72%);
+    --faded-cyan:hsl(179, 26%, 72%);
+    --faded-green:hsl(125, 26%, 72%);
+
+
+    --text:hsl(284,13%,82%);
+  }

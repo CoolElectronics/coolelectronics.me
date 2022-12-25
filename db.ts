@@ -7,7 +7,6 @@ import { ClientUser, ClientUserSettings } from "./clienttypes";
 import { App, CachedUser } from "./main";
 import { Socket } from "socket.io";
 import { PushSubscription } from "web-push";
-import { File } from "./routes/ftp/ftp";
 
 dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI!);
@@ -48,10 +47,10 @@ export class Database {
       }
     });
   }
-  async updateUserSchemas(){
+  async updateUserSchemas() {
     let users = await this.getAll("Users");
-    for (let user of users){
-      updateUserSchema(user,this);
+    for (let user of users) {
+      updateUserSchema(user, this);
     }
   }
   async appendToList(
@@ -111,7 +110,7 @@ export class Database {
     }
   }
   async getAll<T = Document>(collection: string): Promise<T[]> {
-    return await this.database.collection(collection).find<T>({}).toArray();
+    return await this.database.collection(collection).find<T>({}).toArray(); //errors but it compiles fine?
   }
   async getOne<T = Document>(
     collection: string,
@@ -120,7 +119,7 @@ export class Database {
     return await this.database.collection(collection).findOne<T>(selector);
   }
   async addOne<T = Document>(collection: string, obj: T) {
-    await this.database.collection(collection).insertOne(obj);
+    await this.database.collection(collection).insertOne(obj); //same here
   }
 
   async getUser(id: string): Promise<User | null> {
@@ -219,8 +218,8 @@ export interface User {
   settings: ClientUserSettings;
   pushsubscription: PushSubscription | null;
   boards: string[];
-  files: File[];
-  discordId?:string;
+  files: string[];
+  discordId?: string;
   version: number;
 }
 export interface Room {
@@ -230,7 +229,7 @@ export interface Room {
   users: string[];
   messages: ChatMessage[];
   public: boolean;
-  channel?:string;
+  channel?: string;
 }
 export interface ChatMessage {
   uuid: string;
@@ -276,20 +275,20 @@ export async function constructClientUser(
     };
   } else {
     let user = await state.db.getUser(uuid);
-    if (user){
-    return {
-      name: user.username,
-      online: false,
-      uuid,
-    };
-  }else{
+    if (user) {
+      return {
+        name: user.username,
+        online: false,
+        uuid,
+      };
+    } else {
       console.error(uuid);
       return {
         name: "wtf",
-        online:false,
+        online: false,
         uuid,
       };
-  }
+    }
   }
 }
 export interface UserPayload {
@@ -297,14 +296,14 @@ export interface UserPayload {
 }
 type Something = Defined extends void ? never : Defined;
 type Defined = any extends undefined ? never : any;
-function updateUserSchema(olduser: any,db) {
+function updateUserSchema(olduser: any, db) {
   if (olduser.version == 2) return;
   olduser.version = 2;
   olduser.files = [];
   olduser.boards = [];
   db.database
-        .collection("Users")
-        .findOneAndReplace({ uuid: olduser.uuid},olduser);
+    .collection("Users")
+    .findOneAndReplace({ uuid: olduser.uuid }, olduser);
 
 
 }

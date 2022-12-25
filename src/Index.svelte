@@ -3,24 +3,27 @@
   import Background from "./components/Background.svelte";
 
   let selected: "more" | "about" | "projects" | null = null;
+</script>
 
- </script>
-<Background/>
+<Background />
 <main class="flex">
   <div class="pt-20 flex-1">
     <p class="text text-3xl text-center">CoolElectronics.me</p>
     <div class="w-half flex mt-20 mb-10 items-center justify-evenly" id="links">
       <a class="text text-xl" href="/sign">Sign In</a>
       <p class="text text-xl" on:click={() => (selected = "about")}>About</p>
+      <a class="text text-xl" href="/blog">Blog</a>
       <p class="text text-xl" on:click={() => (selected = "projects")}>
         Projects
       </p>
       <p class="text text-xl" on:click={() => (selected = "more")}>More</p>
     </div>
-    <br><br><br>
-    <div class = "flex justify-center">
-  <a id = "footer" class="text text-xs text-centered" href="/money">Click here to sell your data and give me free money</a>
-  </div>
+    <br /><br /><br />
+    <div class="flex justify-center">
+      <a id="footer" class="text text-xs text-centered" href="/money"
+        >Click here to sell your data and give me free money</a
+      >
+    </div>
   </div>
 
   {#if selected}
@@ -53,10 +56,16 @@
         <Card url="https://github.com/CoolElectronics/zsp" title="ZSP">
           A small interpreted programming language made in rust
         </Card>
-        <Card url = "https://github.com/CoolElectronics/bookmarkfs" title = "BookmarkFS">
+        <Card
+          url="https://github.com/CoolElectronics/bookmarkfs"
+          title="BookmarkFS"
+        >
           Store files as Chrome bookmarks that sync between devices
         </Card>
-        <Card url = "https://github.com/CoolElectronics/CoolElectronics.me" title = "This Website">
+        <Card
+          url="https://github.com/CoolElectronics/CoolElectronics.me"
+          title="This Website"
+        >
           It's on github! yay.
         </Card>
       {:else if selected == "more"}
@@ -75,14 +84,29 @@
     </div>
   {/if}
 
+  <a
+    class="text text-xs"
+    id="analytics"
+    href="https://support.google.com/analytics/answer/7318509?hl=en"
+  >
+    there are google analytics cookies living inside your walls
+  </a>
 </main>
 
 <style>
-  #footer{
-  /* position: absolute; */
-  /* bottom:50%; */
-  /*   left: 50%; */
-  /*   transform: translateX(50%); */
+  #analytics {
+    position: absolute;
+    text-align: end;
+    width: 100%;
+  }
+  * {
+    user-select: none;
+  }
+  #footer {
+    /* position: absolute; */
+    /* bottom:50%; */
+    /*   left: 50%; */
+    /*   transform: translateX(50%); */
   }
   #panel {
     /* position: absolute; */

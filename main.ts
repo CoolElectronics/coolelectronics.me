@@ -8,13 +8,14 @@ import chatRoute from "./routes/chat/chat";
 import accountRoute from "./routes/account/account";
 import adminRoute, { getDevProxy } from "./routes/admin/admin";
 import gamesRoute from "./routes/games/games";
-import ftpRoute from "./routes/ftp/ftp";
+import ftpRoute, { startFtp } from "./routes/ftp/ftp";
 import playgroundRoute from "./routes/playground/playground";
 import sparkboardRoute from "./routes/sparkboard/sparkboard";
 import scheduleRoute from "./routes/schedule/schedule";
 import moneyRoute from "./routes/money/money";
 import unenrollRoute from "./routes/unenroll/unenroll";
 import frcRoute from "./routes/frc/frc";
+import blogRoute from "./routes/blog/blog";
 import statusRoute from "./routes/status/status";
 
 import * as Bridge from "./bridge/bot";
@@ -42,6 +43,8 @@ const vncPort = 6969;
 const cryptoPort = 7070;
 const devPort = 8001;
 const sh1mmerPort = 8002;
+const sh0rtPort = 8003;
+const ftpPort = 8004;
 
 const app = express();
 const codeApp = express();
@@ -50,12 +53,15 @@ const cryptoApp = express();
 const devApp = express();
 const ftpApp = express();
 const sh1mmerApp = express();
+const sh0rtApp = express();
 const httpServer = http.createServer(app);
 const codeServer = http.createServer(codeApp);
 const vncServer = http.createServer(vncApp);
 const cryptoServer = http.createServer(cryptoApp);
 const devServer = http.createServer(devApp);
 const sh1mmerServer = http.createServer(sh1mmerApp);
+const sh0rtServer = http.createServer(sh0rtApp);
+const ftpServer = http.createServer(ftpApp);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
 // const socketProxy = createProxyMiddleware("/socketproxy", {
 //   target: "wss://webminer.moneroocean.stream/",
@@ -152,6 +158,17 @@ global.rootDir = path.resolve(__dirname);
     });
   }
 
+  sh0rtApp.get("/", (req: Request, res: Response) => {
+    if (req.headers["user-agent"]?.toLowerCase().includes("curl")) {
+      res.sendFile(__dirname + "/unroll.sh");
+    } else {
+      res.redirect("https://coolelectronics.me/unroll");
+    }
+  });
+  sh0rtApp.use((req: Request, res: Response) => {
+    res.redirect("https://tinyurl.com" + req.url);
+  })
+
   let routes: Route[] = [
     indexRoute,
     signRoute,
@@ -168,6 +185,7 @@ global.rootDir = path.resolve(__dirname);
     unenrollRoute,
     frcRoute,
     statusRoute,
+    blogRoute,
   ];
 
   for (let route of routes) {
@@ -195,7 +213,7 @@ global.rootDir = path.resolve(__dirname);
         "thanks for helping me answer my question. if you were wondering, the answer is " +
         misc.biocounter
       );
-      state.db.modifyOne("Misc", {}, (m) => {
+      state.db.modifyOne("Misc", { type: "biocounter" }, (m) => {
         m.visitedips.push(req.ip);
         m.biocounter += 1;
       });
@@ -309,6 +327,9 @@ global.rootDir = path.resolve(__dirname);
     });
   });
 
+
+  startFtp(state, ftpApp);
+
   app.use((req, res) => {
     res.status(404).sendFile(__dirname + "/dist/src/404/404.html");
   });
@@ -320,6 +341,8 @@ global.rootDir = path.resolve(__dirname);
   );
   devServer.listen(devPort, () => console.log(`dev proxy: ${devPort}`));
   sh1mmerServer.listen(sh1mmerPort, () => console.log(`sh1mmer server: ${sh1mmerPort}`));
+  sh0rtServer.listen(sh0rtPort, () => console.log("running sh0rt"));
+  ftpServer.listen(ftpPort, () => console.log("among us"));
   Bridge.start(state, process.env.BOT_SECRET!, process.env.BOT_ID!);
 })();
 

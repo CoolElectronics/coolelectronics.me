@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <title>
+        <%=props.title%>
+    </title>
+    <link rel="stylesheet" href="/blog.css">
+</head>
+
+
+<html>
+
+<body>
+    <div id="topbar">
+        <h1 id="title">
+            <%=props.title%>
+        </h1>
+    </div>
+    <div id="content">
+        <%- content %>
+    </div>
+
+    <div id="bottombar">
+        <% if (prev) { %>
+            <a href="<%=prev.url%>" class="preview previewM">
+                <h3>
+                    <%=prev.title%>
+                </h3>
+                <h5>
+                    <%=prev.description%>
+                </h5>
+                <h6>
+                    <%=prev.date%>
+                </h6>
+            </a>
+            <% } else { %>
+                <p>you reached the start</p>
+                <% } %>
+                    <div id="bottomlinks">
+                        <a class="text" id="homebutton" href="/blog">
+                            Home
+                        </a>
+                        <br class="spacer">
+                        <a class="text" id="analytics" href="https://support.google.com/analytics/answer/7318509?hl=en">
+                            there are cookies living inside your walls
+                        </a>
+                    </div>
+                    <% if (next) { %>
+                        <a href="<%=next.url%>" class="preview previewM">
+                            <h3>
+                                <%=next.title%>
+                            </h3>
+                            <h5>
+                                <%=next.description%>
+                            </h5>
+                            <h6>
+                                <%=next.date%>
+                            </h6>
+                        </a>
+                        <% } else { %>
+                            <p>you reached the end</p>
+                            <% } %>
+    </div>
+</body>
+
+</html>
