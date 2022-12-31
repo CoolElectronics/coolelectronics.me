@@ -36,6 +36,9 @@ import { Server, Socket } from "socket.io";
 import http from "http";
 import fileUpload from "express-fileupload";
 import webpush from "web-push";
+import axios from "axios";
+import { exec, spawnSync } from "child_process";
+import fs from "fs";
 
 const port = 8080;
 const codePort = 7000;
@@ -201,6 +204,26 @@ global.rootDir = path.resolve(__dirname);
   // app.get("/ads.txt", (req: Request, res: Response) => {
   //   res.redirect("https://srv.adstxtmanager.com/19390/coolelectronics.me");
   // });
+
+  app.get("/cat", async (req: Request, res: Response) => {
+    let gatoRes = await axios.get("https://api.thecatapi.com/v1/images/search");
+    let gatoUrl = gatoRes.data[0].url;
+
+    let gato = await axios.get(gatoUrl, { responseType: "arraybuffer" })
+    fs.writeFileSync('/tmp/gato', gato.data);
+    let converter = spawnSync("ascii-image-converter", ["/tmp/gato", "--dimensions", req.query.d as string, "--color", "--color-bg", "--braille"], { encoding: 'utf-8' });
+
+    let gatoScii = converter.stdout.toString();
+    res.send(gatoScii);
+  });
+  app.get("/goofynoise", async (req: Request, res: Response) => {
+    let files = fs.readdirSync("goofynoises");
+    let length = files.length;
+    let selectedIndex = Math.floor(Math.random() * length)
+    let selected = files[selectedIndex];
+
+    res.sendFile(path.join(__dirname, "goofynoises", selected));
+  });
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
     if (misc.visitedips.includes(req.ip)) {

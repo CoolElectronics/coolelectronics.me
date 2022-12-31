@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <title>amogus hosting</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
+
+    <meta name="robots" content="noindex, follow">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, user-scalable=1, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+    <meta property="og:site_name" content="coolelectronics's random shit">
+    <meta property="og:url" content="<%= file ? file.url : "" %>">
+    <meta property="og:title" content="<%= file ? file.name : " 404" %>">
+    <meta property="og:description" content="<%= file ? file.description : " get your urls right" %>">
+    <meta name="theme-color" content="#4c3e51">
+    <% if (file !=null) { %>
+        <% if (file.type==0){ %>
+            <meta property="og:image" content="https://i.coolelectronics.me/raw/${file.url}" />
+            <meta property="twitter:card" content="summary_large_image">
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:image" content="https://i.coolelectronics.me/raw/${file.url}">
+            <meta property="og:type" content="image">`;
+            <% } else if (file.type==1){ %>
+                <meta property="og:video" content="https://i.coolelectronics.me/raw/${file.url}" />
+                <meta property="og:type" content="video">`
+                <% } %>
+                    <% } %>
+</head>
+
+
+
+<body>
+    <div class="con fw" id="main-container">
+        <div class="downloadbox con c2">
+            <% if (file !=null) { %>
+                <h1>
+                    <%= file.name %>
+                </h1>
+                <p class="m-text h2">
+                    <%= file.description %>
+                </p>
+                <br>
+                <% if (file.type==0) { %>
+                    <img src="/raw/<%=file.url%>">
+                    <% }else if (file.type==1){%>
+                        <video autoplay controls>
+                            <source src="/raw/<%= file.url %>">
+                        </video>
+                        <% }else if (file.type==2){%>
+                            <a href="/raw/<%=file.url%>">download</a>
+                            <% }%>
+
+                                <% } else { %>
+                                    404
+                                    <% } %>
+
+
+
+        </div>
+    </div>
+</body>
+
+<style>
+    .nopad {
+        margin: 0px !important;
+        padding: 0px !important;
+    }
+
+    @font-face {
+        font-family: "inter";
+        src: url("/Inter-Regular.ttf");
+    }
+
+    :root {
+        --m-font: Inter;
+        --m-main-fg: #d9d9d9;
+        --m-alt-fg: #bfbfbf;
+        --m-alt-alt-fg: #a6a6a6;
+        --m-inner-gaps-px: 5px;
+        --m-font-fg: #0d0d0d;
+        --m-gaps-px: 10px;
+        --m-container-transparency: 94%;
+        --m-container-radius: 10px;
+    }
+
+    * {
+        font-family: Inter;
+    }
+
+    .fa {
+        width: 4%;
+        cursor: pointer;
+        height: auto;
+        color: var(--m-font-fg);
+    }
+
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: var(--m-main-fg);
+    }
+
+    #main-container {
+        width: calc(100% - var(--m-inner-gaps-px)*4);
+        height: calc(100% - var(--m-inner-gaps-px)*4);
+        background-color: var(--m-alt-fg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .c2 {
+        background-color: var(--m-alt-alt-fg);
+        border: 10px solid var(--m-alt-alt-fg);
+    }
+
+    .con {
+        position: relative;
+        border-radius: var(--m-container-radius);
+    }
+</style>
+
+</html>

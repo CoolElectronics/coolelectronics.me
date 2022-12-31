@@ -39,13 +39,13 @@ export function startFtp(state: App, ftpApp: Application) {
         {},
         (user: User) => {
           if (user.uuid == file!.owner) {
-            res.send(constructDoc(req, file, req.url));
+            res.render("file.ejs", { file });
           }
         },
         () => res.sendStatus(403),
       );
     } else {
-      res.send(constructDoc(req, file, req.url));
+      res.render("file.ejs", { file });
     }
   });
 }
@@ -64,8 +64,8 @@ function constructDoc(req: Request, file: Ftp.File | null, url: string) {
       <meta property="og:site_name" content="coolelectronics's random shit">
       <meta property="og:url" content="${file ? xss(file.url) : url}">
       <meta property="og:title" content="${file ? xss(file.name) : "404"}">
-      <meta property="og:description" content="${file ? xss(file.description) : "get your urls right"}">
-
+      <meta property="og:description" content="${file ? (xss(file.description) + (file.type == Ftp.FileType.RAW ? " click to download" : " ")) : "get your urls right"}">
+      <meta name="theme-color" content="#4c3e51">
       ${file ? constructMeta(file) : ""}
   </head>
 
@@ -81,7 +81,7 @@ function constructDoc(req: Request, file: Ftp.File | null, url: string) {
           padding: 0px !important;
       }
       :root {
-          /* --m-font: Assistant; */
+          --m-font: Assistant;
           --m-main-fg: #d9d9d9;
           --m-alt-fg: #bfbfbf;
           --m-alt-alt-fg: #a6a6a6;
@@ -126,21 +126,7 @@ function constructDoc(req: Request, file: Ftp.File | null, url: string) {
 }
 
 function constructBody(req, file: Ftp.File) {
-  return `<div class="con fw" id="main-container">
-  <div class="downloadbox con c2">
-      <h1>
-        ${xss(file.name)}
-      </h1>
-      <p class="m-text h2">
-          ${xss(file.description)}
-      </p>
-      <br>
-      ${constructView(req, file)}
-      <br>
-      <br>
-
-  </div>
-</div>`;
+  return ``;
 }
 function constructView(req: Request, file: Ftp.File) {
   console.log(req);
@@ -150,15 +136,23 @@ function constructView(req: Request, file: Ftp.File) {
     case Ftp.FileType.VIDEO:
       return `video`;
     case Ftp.FileType.RAW:
-      return `<a href = "${req.protocol}://${req.hostname}/raw/${file.url}">download</a>`
+      return `<a href = "/raw/${file.url}">download</a>`
   }
 }
 
 function constructMeta(file: Ftp.File) {
-  if (file.type) {
-
+  switch (file.type) {
+    case Ftp.FileType.IMAGE:
+      return `<meta property="og:image" content="https://i.coolelectronics.me/raw/${file.url}"/>
+              <meta property="twitter:card" content="summary_large_image">
+              <meta name="twitter:card" content="summary_large_image">
+              <meta name="twitter:image" content="https://i.coolelectronics.me/raw/${file.url}">
+              <meta property="og:type" content="image">`;
+    case Ftp.FileType.VIDEO:
+      return `<meta property="og:video" content="https://i.coolelectronics.me/raw/${file.url}"/>
+      <meta property="og:type" content="video">`;
+    default: return "";
   }
-  return "";
 }
 
 function getFileFromUrl(state: App, url: string): Promise<Ftp.File | null> {
@@ -238,12 +232,10 @@ export default {
           url: body.url.normalize(),
           visibility: body.visibility,
           name: body.name.normalize(),
-          viewedtimes: 0,
           owner: user.uuid,
           num: number + 1,//+1 so that an encoding of "" is an impossible state
           description: body.description.normalize(),
           type: body.type,
-          ips: [],
         };
 
         await state.db.modifyOneProp(
@@ -257,14 +249,41 @@ export default {
         return constructClientFile(file);
       },
     },
-    // {
-    //   api:Ftp.EditFile,
-    //   require:{
-    //     ftp:{
-    //       upload:true,
-    //     }
-    //   }
-    // },
+    {
+      api: Ftp.GetFiles,
+      route: async (state: App, user: User): Promise<Ftp.GetFilesResponse> => {
+        let files = await state.db.database.collection("Ftp").find<Ftp.File>({ owner: user.uuid }).toArray();
+        return files.map(constructClientFile);
+      },
+      require: {},
+    },
+    {
+      api: Ftp.EditFile,
+      route: async (
+        state: App,
+        user: User,
+        body: Ftp.EditFileRequest
+      ): Promise<Failure | undefined> => {
+        let file = await state.db.getOne<Ftp.File>("Ftp", { uuid: body.uuid });
+        if (!file || file.owner != user.uuid) return { failure: "Forbidden" };
+        if (file.url != body.url) {
+          let existingFile = await state.db.getOne("Ftp", { url: body.url });
+          if (existingFile) return { failure: "choose another url" };
+        }
+        await state.db.modifyOne("Ftp", { uuid: body.uuid }, (file) => {
+          file.url = body.url;
+          file.name = body.name;
+          file.visibility = body.visibility;
+          file.type = body.type;
+          file.description = body.description;
+        });
+      },
+      require: {
+        ftp: {
+          upload: true,
+        }
+      }
+    },
     {
       path: "/upload",
       type: RequestType.POST,
@@ -295,9 +314,8 @@ function constructClientFile(file: Ftp.File): Ftp.ClientFile {
     name: file.name,
     uuid: file.uuid,
     url: file.url,
-    viewedtimes: file.viewedtimes,
-    ips: file.ips,
     type: file.type,
     description: file.description,
+    visibility: file.visibility,
   };
 }

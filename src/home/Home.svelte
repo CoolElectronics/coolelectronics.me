@@ -36,13 +36,17 @@
       title="Schedule Viewer"
       desc="Shows you how much time is left in a class, and a whole bunch of other stuff"
     />
-    <AppButton url="/ftp" title="File Hosting" desc="NOT FUNCTIONAL." />
+    <AppButton
+      url="/ftp"
+      title="File Hosting"
+      desc="Works! Finally. ask me if you want access, but no zip bombs please"
+    />
     <AppButton
       url="/sparkboard"
       title="SparkBoard"
       desc="Program to help you organize and come up with ideas. BETA, INCOMPLETE"
     />
-    <AppButton url="/blogs" title="Blogs" desc="NOT FUNCTIONAL." />
+    <AppButton url="/blog" title="My Blog" desc="you should read it" />
     <AppButton
       url="/account"
       title="Account Settings"

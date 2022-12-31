@@ -23,6 +23,9 @@ export const CreateFile = {
 export interface EditFileRequest {
   uuid: string;
   name: string;
+  type: FileType;
+  url: string;
+  description: string;
   visibility: FileVisibility;
 }
 export type EditFileResponse = ClientFile;
@@ -33,9 +36,21 @@ export const EditFile = {
   request: {
     uuid: "",
     name: "",
+    url: "",
+    description: "",
     visibility: 0,
+    type: 0,
   }
 }
+
+
+export const GetFiles = {
+  type: RequestType.GET,
+  path: "files",
+  route: "ftp",
+  request: {}
+}
+export type GetFilesResponse = ClientFile[];
 
 
 export enum FileVisibility {
@@ -52,10 +67,9 @@ export interface ClientFile {
   uuid: string;
   url: string;
   name: string;
-  viewedtimes: number;
   description: string;
-  ips: string[];
   type: FileType;
+  visibility: FileVisibility;
 }
 export interface File {
   uuid: string;
@@ -65,7 +79,5 @@ export interface File {
   name: string;
   visibility: FileVisibility;
   owner: string;
-  viewedtimes: number;
-  ips: string[];
   type: FileType;
 }

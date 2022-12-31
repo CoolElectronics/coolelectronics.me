@@ -2,14 +2,37 @@
     font-family: "inter";
     src: url("/Inter-Regular.ttf");
 }
-.text,p, h1, h2, h3, h4, h5,h6{
+.text,p,h0, h1, h2, h3, h4, h5,h6{
     font-family: inter;
     user-select: none;
     color: var(--text);
+    /* font-size: 100%; */
+}
+h0{
+    font-size: 2.5em;
+}
+h1{
+    font-size: 2em;
+}
+h2{
+    font-size: 1.7em;
+}
+h3{
+    font-size: 1.5;
+}
+h4{
+    font-size: 1.3em;
+}
+h5{
+    font-size: 1.2em;
+}
+h6{
+    font-size: 1em;
 }
 #topbar{
     padding: 1em;
-    background-color: var(--darkp1);
+    background-color: var(--darkm1);
+    text-align: center;
 }
 #bottombar{
     /* position: absolute; */
@@ -59,12 +82,36 @@
     padding: 0;
 }
 #content{
-    padding: 0.5em;
     flex:1;
+}
+#opacityhack{
+    top:0;
+    z-index: -1;
+    position: fixed;
+    background-color: var(--dark);
+    width: 100%;
+    height: 100%;
+    opacity: 80%;
+}
+#centerhack{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#innercontent{
+    padding: 2.5em;
+    background-color: var(--darkp1);
+    max-width: 50%;
+    opacity: 100%;
 }
 pre, code{
     user-select:text;
     color: var(--faded-cyan);
+    background-color: var(--darkm1);
+    overflow: scroll;
 }
 body{
     background-color: var(--dark);
@@ -74,6 +121,17 @@ body{
   margin: 0;
   display: flex;
   flex-direction: column;
+}
+#canvascontainer{
+    top: 0;
+    z-index: -1;
+    position: fixed;
+}
+a{
+    color: aqua;
+}
+.center{
+    text-align: center;
 }
 
 #analytics{
@@ -85,6 +143,10 @@ img{
         height: 100%;
     max-height: 25em;
     margin: 1em;
+}
+
+*::selection{
+   background-color: var(--darkp1);
 }
 
 
