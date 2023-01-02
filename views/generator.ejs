@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <title>
+        TN tech support generator
+    </title>
+    <link rel="stylesheet" href="/blog.css">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MT82HHR67Y"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"
+        integrity="sha512-WJXVjqeINVpi5XXJ2jn0BSCfp0y80IKrYh731gLRnkAS9TKc5KNt/OfLtu+fCueqdWniouJ1ubM+VI/hbo7POQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-MT82HHR67Y');
+        var goals = ["unenroll", "unenroll without crosh", "disable filters", "remove extensions", "enable developer mode", "install linux", "unblock sites", "downgrade"]
+        var verbs = ["bruteforce", "hack", "bypass", "run the unenroll script on", "use LTBEEF on", "playstore bypass", "crack", "bypass", "ddos", "rm -rf", "use a bookmarklet on", "exploit", "remove", "uninstall", "downgrade"]
+        var nouns = ["crosh shell", "about:blank page", "proxy", "bookmarklet", "chromebook", "website", "extension", "extension page", "skid", "shim", "enrollment chip", "goguardian", "filter", "servers", "luphoria", "RWFW partition"]
+        var patterns = ["if you want to <goal>, first <verb> the <noun>, then restart and you should be set",
+            "yeah so you want to <verb> the <noun>, you don't want to <verb> the <noun>",
+            "...that's not how it works. if you want to <goal> the only way to do that is to <verb> the <noun>",
+            "why do you want to <goal>? just <verb> the <noun> to <goal>",
+            "sure just <verb> the <noun>",
+            "to <goal>, you need to <verb> the <noun>",
+            "if you <verb> the <noun> that breaks the <noun> so we want to <verb> the <noun> to <goal> instead"]
+
+
+        Array.prototype.rand = function () {
+            return this[Math.floor(Math.random() * this.length)]
+        }
+
+        function generate() {
+            let pattern = patterns.rand();
+            let i = 0;
+            while (i < pattern.length) {
+                let char = pattern[i];
+
+                let buffer = "";
+                if (char == "<") {
+                    let repstart = i;
+                    while (char != ">") {
+                        i += 1;
+                        char = pattern[i];
+                        buffer += char;
+                    }
+                    buffer = buffer.substring(0, buffer.length - 1) + "s";
+                    let sub = window[buffer].rand() //yeah  yeah yeah ik
+                    pattern = pattern.substring(0, repstart) + sub + pattern.substring(i + 1)
+                }
+                i += 1;
+            }
+            return pattern
+        }
+
+
+        function generateButton() {
+            document.getElementById("generated").innerText = generate();
+        }
+    </script>
+    <script src="/bg.js"></script>
+</head>
+
+
+<html>
+
+<body>
+    <div id="canvascontainer"></div>
+    <div id="topbar">
+        <h0 id="title">
+            Titanium Network tech support generator
+        </h0>
+    </div>
+    <div id="content">
+        <div id="opacityhack"></div>
+
+        <div id="centerhack" style="align-items: center; flex-direction: column;">
+            <button onclick="generateButton()" id="generate">
+                Generate
+            </button>
+            <div id="innercontent" style="background-color: initial;">
+                <h3 id="generated" style="user-select: initial; background-color: var(--darkm1); padding: 0.25em;"></h3>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottombar">
+        <div id="bottomlinks">
+            <a class="text" id="homebutton" href="/blog">
+                Home
+            </a>
+            <br class="spacer">
+            <a class="text" id="analytics" href="https://support.google.com/analytics/answer/7318509?hl=en">
+                there are cookies living inside your walls
+            </a>
+        </div>
+    </div>
+</body>
+
+<style>
+    #generate {
+        border: none;
+        color: var(--text);
+        background-color: var(--darkm2);
+        font-size: x-large;
+        padding: 0.5em;
+        border-radius: 12px;
+
+    }
+</style>
+
+</html>

@@ -224,6 +224,9 @@ global.rootDir = path.resolve(__dirname);
 
     res.sendFile(path.join(__dirname, "goofynoises", selected));
   });
+  app.get("/generator", (req, res) => {
+    res.render("generator.ejs");
+  })
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
     if (misc.visitedips.includes(req.ip)) {
