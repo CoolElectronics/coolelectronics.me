@@ -17,6 +17,7 @@ import unenrollRoute from "./routes/unenroll/unenroll";
 import frcRoute from "./routes/frc/frc";
 import blogRoute from "./routes/blog/blog";
 import statusRoute from "./routes/status/status";
+import generatorRoute from "./routes/generator/generator";
 
 import * as Bridge from "./bridge/bot";
 import proxy, { createProxyMiddleware } from "http-proxy-middleware";
@@ -189,6 +190,7 @@ global.rootDir = path.resolve(__dirname);
     frcRoute,
     statusRoute,
     blogRoute,
+    generatorRoute,
   ];
 
   for (let route of routes) {
@@ -224,9 +226,6 @@ global.rootDir = path.resolve(__dirname);
 
     res.sendFile(path.join(__dirname, "goofynoises", selected));
   });
-  app.get("/generator", (req, res) => {
-    res.render("generator.ejs");
-  })
   app.get("/bio", async (req: Request, res: Response) => {
     let misc = (await state.db.getOne("Misc", {})) as any;
     if (misc.visitedips.includes(req.ip)) {
