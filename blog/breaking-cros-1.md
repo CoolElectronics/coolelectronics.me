@@ -1,4 +1,4 @@
-{"title":"Breaking chromeOS's enrollment security model: Part 1", "description":"(Part 2 to be released in ~4 months)", "date":"12/11/2022"}
+{"title":"Breaking chromeOS's enrollment security model: Part 1", "date":"12/24/2022"}
 
 ## Context
 
@@ -110,12 +110,12 @@ You could try blocking crosh, of course. But that won't break the chain, not if 
 
 Is there at least a way to tell if this evil user has unenrolled? Not really. Inside the Google Admin Console where all devices are listed, an unenrolled device will simply show up as "offline", indistinguishable from a chromebook that's just simply powered off. Sure, the date since last online will creep further and further into the past but the user can just re-enroll and unenroll every week so it doesn't look too suspicious.
 
-Part 2 of this post will focus on completely unmitigatable ways to accomplish unenrollment, and will be released as soon as google lets me talk about it.
+Part 2 of this post will focus on completely unmitigatable ways to accomplish unenrollment, and is out [now](/blog/breaking-cros-2).
 
 ## Credits
 
 Creating the scraper used in Downgrading: Divide<br>
-Crosh Breakout and Root Escalations: Rory McNamara. (NOT ASSOCIATED WITH US IN ANY FORM)<br>
+Crosh Breakout and Root Escalations: Rory McNamara (NOT ASSOCIATED WITH US IN ANY FORM)<br>
 Utilizing privileged extension impersonation: SprinkzMC<br>
 Kiosk exploit: Divide and B3at<br>
 Userpolicy bypass: CoolElectronics

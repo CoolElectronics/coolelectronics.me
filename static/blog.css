@@ -29,6 +29,9 @@ h5{
 h6{
     font-size: 1em;
 }
+.rotate90 {
+    transform: rotate(-90deg);
+}
 #topbar{
     padding: 1em;
     background-color: var(--darkm1);
