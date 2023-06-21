@@ -50,12 +50,13 @@
               All my public projects, including this website
             </Card>
             <Card title="Contact">
-              Discord: CoolElectronics#4683<br />
-              Email: kveonl98@gmail.com<br />Mastodon:
+              Discord: <a href="https://discord.com/users/696392247205298207" class="text-blue-500">@coolelectronics</a><br />
+              Email: <a href="mailto:me@coolelectronics.me"  class="text-blue-500" >me@coolelectronics.me</a><br />
+              Mastodon:
               <a
                 class="text-blue-500"
                 href="https://akkoma.mercurywork.shop/coolelectronics"
-                >@coolelectronics@mercurywork.shop</a
+                >@coolelectronics@akkoma.mercurywork.shop</a
               >
               <br />
               <br />
@@ -96,9 +97,15 @@
           </Card>
         {:else if selected == "more"}
           <div class="">
-            <Card url="/unroll" title="unroll">
-              a collection of scripts to help you deprovision chromeOS devices
+            <Card url="https://mercurywork.shop" title="ZSP playground">
+              an online interpreter for my programming language, ZSP
             </Card>
+            <Card url="/pgp" title="PGP">
+              for the nerds
+            </Card>
+            <!-- <Card url="/unroll" title="unroll"> -->
+            <!--   a collection of scripts to help you deprovision chromeOS devices -->
+            <!-- </Card> -->
             <Card url="/playground" title="ZSP playground">
               an online interpreter for my programming language, ZSP
             </Card>

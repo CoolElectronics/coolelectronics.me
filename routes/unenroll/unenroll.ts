@@ -4,6 +4,8 @@ import { App } from "../../main";
 export default {
   init: (state: App, app: Express) => {
     app.get("/unroll91", (req: Request, res: Response) => {
+
+      res.setHeader("X-Robots-Tag", "noindex");
       res.sendFile(global.rootDir + "/unroll91.sh");
 
       // if (state.activelinks.includes(req.query.key as string)) {
@@ -12,6 +14,8 @@ export default {
       // }
     })
     app.get("/unroll101", (req: Request, res: Response) => {
+
+      res.setHeader("X-Robots-Tag", "noindex");
       res.sendFile(global.rootDir + "/unroll101.sh");
 
       // if (state.activelinks.includes(req.query.key as string)) {
@@ -20,6 +24,8 @@ export default {
       // }
     });
     app.get("/unroll87", (req: Request, res: Response) => {
+
+      res.setHeader("X-Robots-Tag", "noindex");
       res.sendFile(global.rootDir + "/unroll87.sh");
     });
     // app.get("/unroll", (req: Request, res: Response) => {
@@ -28,6 +34,7 @@ export default {
   },
   path: "unroll",
   route: (state: App, req: Request, res: Response) => {
+    res.setHeader("X-Robots-Tag", "noindex");
     res.sendFile(global.rootDir + "/dist/src/unenroll/unenroll.html");
 
     // if (state.activelinks.includes(req.query.key as string)) {

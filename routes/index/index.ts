@@ -5,7 +5,7 @@ import { App, CachedUser, parse } from "../../main";
 import { constructClientUser, Room, User } from "../../db";
 import { ClientSelf, ClientUser, RequestType } from "../../clienttypes";
 import { sendRoom } from "../chat/chat";
-import { GetUser, GetUserRequest, GetUserResponse, Self,SelfResponse } from "./types";
+import { GetUser, GetUserRequest, GetUserResponse, Self, SelfResponse } from "./types";
 
 export function socketConnect(state: App, socket: Socket) {
   let cookies = parse(socket.request.headers.cookie);
@@ -44,8 +44,8 @@ export function socketConnect(state: App, socket: Socket) {
         state.usercache.setVal(user.uuid, null, cacheduser);
       });
     },
-    () => {},
-    () => {}
+    () => { },
+    () => { }
   );
 }
 
@@ -66,9 +66,9 @@ export default {
   listeners: [],
   api: [
     {
-      api:Self,
+      api: Self,
       require: {},
-      route: async (state: App, user: User): Promise<SelfResponse>=>{
+      route: async (state: App, user: User): Promise<SelfResponse> => {
         let clientself: ClientSelf = {
           username: user.username,
           uuid: user.uuid,
@@ -78,14 +78,14 @@ export default {
       },
     },
     {
-      api:GetUser,
+      api: GetUser,
       require: {},
-      route: async (state: App, user: User, body:GetUserRequest):Promise<GetUserResponse> => {
+      route: async (state: App, user: User, body: GetUserRequest): Promise<GetUserResponse> => {
         return await constructClientUser(state, body.uuid);
       },
     },
   ],
-  seopage:`
+  seopage: `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -102,10 +102,11 @@ export default {
         <a href = "/ftp"></a>
         <h1>CoolElectronics.me</h1>
         <p>
-            This is coolelectronics.me, a website originally started to get
-            around filters by my school district but now hosts a whole bunch of
-            projects with varying usefullness
+        This is coolelectronics.me, a website originally started to get
+        around filters by my school district but now hosts a whole bunch of
+        projects with varying usefullness
         </p>
+        <a href = "/blog">CoolElectronics's blog. Information about sh1mmer, mercury workshop, my cool projects, and some fun chromeos security writeups</a>
       </body>
     </html>
   `,

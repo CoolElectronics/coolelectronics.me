@@ -243,7 +243,7 @@ export default {
           proxyServer.on("proxyReq", requireCheck);
         };
         devProxy = createProxyMiddleware({
-          target: `http://10.0.1.65:${body.port}`,
+          target: `http://10.0.1.5:${body.port}`,
           ws: true,
           plugins: body.require == 0 ? [] : [plugin],
         });

@@ -3,11 +3,15 @@
 
 <head>
     <title>CoolElectronics's Blog</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="CoolElectronics's blog. Contains all my cool projects and some chromeos security writeups">
     <link rel="stylesheet" href="/blog.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MT82HHR67Y"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
+        function gtag() {dataLayer.push(arguments);}
         gtag('js', new Date());
 
         gtag('config', 'G-MT82HHR67Y');
@@ -20,7 +24,7 @@
             CoolElectronics's Blog
         </h1>
         <code>
-            <%=quote%>
+            <%-quote%>
         </code>
     </div>
     <h4 class="center">Congratulations Lucky Visitor! You are the <%=num%>th person to visit this page! Your reward is
@@ -32,12 +36,12 @@
     <div id="postlist">
         <% posts.forEach(preview=>{ %>
             <a href="<%=preview.url%>" class="preview previewS">
-                <h3>
-                    <%=preview.title%>
-                </h3>
                 <h5>
-                    <%=preview.description%>
+                    <%=preview.title%>
                 </h5>
+                <h3>
+                    <%=preview.description%>
+                </h3>
                 <h6>
                     <%=preview.date%>
                 </h6>

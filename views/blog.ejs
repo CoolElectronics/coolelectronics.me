@@ -6,13 +6,15 @@
         <%=props.title%>
     </title>
     <link rel="stylesheet" href="/blog.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="<%=props.title%> - <%=props.description%>">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MT82HHR67Y"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"
         integrity="sha512-WJXVjqeINVpi5XXJ2jn0BSCfp0y80IKrYh731gLRnkAS9TKc5KNt/OfLtu+fCueqdWniouJ1ubM+VI/hbo7POQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
+        function gtag() {dataLayer.push(arguments);}
         gtag('js', new Date());
 
         gtag('config', 'G-MT82HHR67Y');
@@ -50,12 +52,12 @@
     <div id="bottombar">
         <% if (prev) { %>
             <a href="<%=prev.url%>" class="preview previewM">
-                <h3>
-                    <%=prev.title%>
-                </h3>
                 <h5>
-                    <%=prev.description%>
+                    <%=prev.title%>
                 </h5>
+                <h3>
+                    <%=prev.description%>
+                </h3>
                 <h6>
                     <%=prev.date%>
                 </h6>
@@ -74,12 +76,12 @@
                     </div>
                     <% if (next) { %>
                         <a href="<%=next.url%>" class="preview previewM">
-                            <h3>
-                                <%=next.title%>
-                            </h3>
                             <h5>
-                                <%=next.description%>
+                                <%=next.title%>
                             </h5>
+                            <h3>
+                                <%=next.description%>
+                            </h3>
                             <h6>
                                 <%=next.date%>
                             </h6>

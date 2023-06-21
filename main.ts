@@ -18,6 +18,7 @@ import frcRoute from "./routes/frc/frc";
 import blogRoute from "./routes/blog/blog";
 import statusRoute from "./routes/status/status";
 import generatorRoute from "./routes/generator/generator";
+import pgpRoute from "./routes/pgp/pgp";
 
 import * as Bridge from "./bridge/bot";
 import proxy, { createProxyMiddleware } from "http-proxy-middleware";
@@ -50,6 +51,8 @@ const sh1mmerPort = 8002;
 const sh0rtPort = 8003;
 const ftpPort = 8004;
 
+const moistPort = 8005;
+
 const app = express();
 const codeApp = express();
 const vncApp = express();
@@ -58,6 +61,7 @@ const devApp = express();
 const ftpApp = express();
 const sh1mmerApp = express();
 const sh0rtApp = express();
+const moistApp = express();
 const httpServer = http.createServer(app);
 const codeServer = http.createServer(codeApp);
 const vncServer = http.createServer(vncApp);
@@ -66,6 +70,7 @@ const devServer = http.createServer(devApp);
 const sh1mmerServer = http.createServer(sh1mmerApp);
 const sh0rtServer = http.createServer(sh0rtApp);
 const ftpServer = http.createServer(ftpApp);
+const moistServer = http.createServer(moistApp);
 export const parse = (cookie) => (cookie ? Cookie.parse(cookie) : null);
 // const socketProxy = createProxyMiddleware("/socketproxy", {
 //   target: "wss://webminer.moneroocean.stream/",
@@ -86,7 +91,7 @@ app.use(cookieParser());
 codeApp.use(cookieParser());
 vncApp.use(cookieParser());
 devApp.use(cookieParser());
-
+moistApp.use(cookieParser());
 app.use(
   fileUpload({
     createParentPath: true,
@@ -119,16 +124,25 @@ global.rootDir = path.resolve(__dirname);
           req.cookies,
           { Administrator: true },
           () => { },
-          () => res.send("forbidden")
+          () => res.send("very forbidden")
         );
       }
     );
   };
-
+  moistApp.use(
+    "/",
+    createProxyMiddleware({
+      target: `http://127.0.0.1:31337`,
+      autoRewrite: true,
+      changeOrigin: true,
+      ws: true,
+      plugins: [adminOnlyPlugin],
+    })
+  );
   codeApp.use(
     "/",
     createProxyMiddleware({
-      target: "http://10.0.1.65:7999",
+      target: `http://10.0.1.5:7999`,
       autoRewrite: true,
       changeOrigin: true,
       ws: true,
@@ -138,7 +152,7 @@ global.rootDir = path.resolve(__dirname);
   vncApp.use(
     "/",
     createProxyMiddleware({
-      target: "http://10.0.1.65:6082",
+      target: `${process.env.HOST}:6082`,
       ws: true,
       plugins: [adminOnlyPlugin],
     })
@@ -191,6 +205,7 @@ global.rootDir = path.resolve(__dirname);
     statusRoute,
     blogRoute,
     generatorRoute,
+    pgpRoute,
   ];
 
   for (let route of routes) {
@@ -227,7 +242,7 @@ global.rootDir = path.resolve(__dirname);
     res.sendFile(path.join(__dirname, "goofynoises", selected));
   });
   app.get("/bio", async (req: Request, res: Response) => {
-    let misc = (await state.db.getOne("Misc", {})) as any;
+    let misc = (await state.db.getOne("Misc", { type: "biocounter" })) as any;
     if (misc.visitedips.includes(req.ip)) {
       res.send(
         "hey! you've already been here. if you were here to see what the current count is, its " +
@@ -244,6 +259,29 @@ global.rootDir = path.resolve(__dirname);
       });
     }
   });
+
+  app.post("/fakemurk-telemetry", async (req: Request, res: Response) => {
+    let misc = (await state.db.getOne("Misc", { type: "murkcounter" })) as any;
+    let hwid = req.body["hwid"];
+    if (!misc.hwids.includes(hwid)) {
+      await state.db.modifyOne("Misc", { type: "murkcounter" }, (m) => {
+        m.hwids.push(hwid);
+        m.unique += 1;
+      });
+    }
+
+    await state.db.modifyOne("Misc", { type: "murkcounter" }, (m) => {
+      m.total += 1;
+      m.telemetry[hwid] = {
+        userpolicy: req.body["userpolicy"],
+        devicepolicy: req.body["devicepolicy"],
+        "lsb-release": req.body["lsb-release"],
+      };
+    });
+
+    res.sendStatus(200);
+  });
+
   routes.forEach((route) => {
     console.log(Object.keys(route));
     app.get("/" + route.path, (req: Request, res, next) => {
@@ -252,6 +290,9 @@ global.rootDir = path.resolve(__dirname);
           req.headers["user-agent"]?.toLowerCase().includes("curl")) &&
         route.seopage
       ) {
+        if (route.path == "unroll") {
+          res.setHeader("X-Robots-Tag", "noindex");
+        }
         res.send(route.seopage);
       } else {
         if (route.require) {
@@ -274,7 +315,7 @@ global.rootDir = path.resolve(__dirname);
         route.path +
         (endpoint.api ? endpoint.api.path : endpoint.path);
       console.log(path);
-      let routefn = async function (req, res, next) {
+      let routefn = async function(req, res, next) {
         if (endpoint.require) {
           state.db.Validate(
             req.cookies,
@@ -361,6 +402,8 @@ global.rootDir = path.resolve(__dirname);
   httpServer.listen(port, () => console.log(`app : ${port}.`));
   codeServer.listen(codePort, () => console.log(`code server : ${codePort}.`));
   vncServer.listen(vncPort, () => console.log(`vnc server : ${vncPort}.`));
+
+  moistServer.listen(moistPort, () => console.log(`moist server : ${moistPort}.`));
   cryptoServer.listen(cryptoPort, () =>
     console.log(`crypto proxy : ${cryptoPort}`)
   );

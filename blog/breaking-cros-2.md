@@ -194,7 +194,7 @@ They would first have to fix the critical bug inside the initramfs that allows u
 
 Once the firmware update hits, every single shim usb in the world would suddenly stop working, requiring the repair centers to get them from the manufacturers, and the manufacturers to get a bunch of from google. Overall, a large logistical issue.
 
-Somehow, we managed to find enough additional bugs to fit in a [Part 3](/blog/breaking-cros-3). Again, expect a delay before it goes public.
+Somehow, we managed to find enough additional bugs to fit in a [Part 3](/blog/breaking-cros-3) and maybe even a [Part 4](/blog/breaking-cros-4). Again, expect a delay before it goes public.
 
 ## Credits
 
